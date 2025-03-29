@@ -7,6 +7,17 @@ import { Book, Calendar, User } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
+// Define the Teaching type
+type Teaching = {
+  id: number;
+  title: string;
+  author: string;
+  date: string;
+  description: string;
+  category: string;
+  imageUrl: string;
+};
+
 // Mock data - in a real application, this would come from Supabase
 const teachings = [
   {
@@ -66,7 +77,7 @@ const teachings = [
 ];
 
 // In a real app, this would fetch from Supabase
-const fetchTeachings = async () => {
+const fetchTeachings = async (): Promise<Teaching[]> => {
   // Simulate API call
   return new Promise((resolve) => {
     setTimeout(() => resolve(teachings), 500);
@@ -74,7 +85,7 @@ const fetchTeachings = async () => {
 };
 
 const Teachings = () => {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<Teaching[]>({
     queryKey: ['teachings'],
     queryFn: () => fetchTeachings()
   });
@@ -100,7 +111,7 @@ const Teachings = () => {
                 </Card>
               ))
             ) : (
-              data?.map((teaching: any) => (
+              data?.map((teaching) => (
                 <Card key={teaching.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
                   <div className="aspect-video bg-spiritual-sand/30 relative">
                     <img 

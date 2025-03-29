@@ -93,7 +93,7 @@ const Profile = () => {
         .update({
           first_name: values.firstName,
           last_name: values.lastName,
-          updated_at: new Date(),
+          updated_at: new Date().toISOString(), // Fixed: Convert Date to string
         })
         .eq('id', user.id);
 

@@ -7,6 +7,17 @@ import { Calendar, Clock, MapPin } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
+// Define the Event type
+type Event = {
+  id: number;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  description: string;
+  imageUrl: string;
+};
+
 // Mock data - in a real application, this would come from Supabase
 const events = [
   {
@@ -66,7 +77,7 @@ const events = [
 ];
 
 // In a real app, this would fetch from Supabase
-const fetchEvents = async () => {
+const fetchEvents = async (): Promise<Event[]> => {
   // Simulate API call
   return new Promise((resolve) => {
     setTimeout(() => resolve(events), 500);
@@ -74,7 +85,7 @@ const fetchEvents = async () => {
 };
 
 const Events = () => {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<Event[]>({
     queryKey: ['events'],
     queryFn: () => fetchEvents()
   });
@@ -100,7 +111,7 @@ const Events = () => {
                 </Card>
               ))
             ) : (
-              data?.map((event: any) => (
+              data?.map((event) => (
                 <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
                   <div className="aspect-video bg-spiritual-sand/30 relative">
                     <img 
