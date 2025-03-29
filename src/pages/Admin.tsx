@@ -7,11 +7,91 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Calendar, BookOpen, Heart, Settings, AlertTriangle } from 'lucide-react';
+import { 
+  Users, Calendar, BookOpen, Heart, 
+  Settings, Trash2, Edit, Plus, Shield
+} from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+interface Profile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  is_admin: boolean;
+  email?: string;
+}
 
 const AdminDashboard = () => {
   const { user, isAdmin, isLoading } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Fetch user profiles with admin status
+  const { data: profiles, isLoading: profilesLoading, refetch: refetchProfiles } = useQuery({
+    queryKey: ['profiles'],
+    queryFn: async () => {
+      // First get profiles
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('*');
+      
+      if (error) throw error;
+      
+      // Then get user emails
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      if (authError) {
+        console.error("Could not fetch auth users:", authError);
+        return profiles as Profile[];
+      }
+      
+      // Combine the data
+      const combinedData = profiles.map(profile => {
+        const authUser = authUsers.users.find(u => u.id === profile.id);
+        return {
+          ...profile,
+          email: authUser?.email || 'Unknown'
+        };
+      });
+      
+      return combinedData as Profile[];
+    },
+    enabled: !!user && isAdmin
+  });
+
+  // Toggle admin status
+  const toggleAdminStatus = async (userId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_admin: !currentStatus })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Admin status ${!currentStatus ? 'granted' : 'revoked'} successfully`,
+      });
+      
+      refetchProfiles();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to update admin status",
+      });
+    }
+  };
 
   useEffect(() => {
     if (!isLoading && (!user || !isAdmin)) {
@@ -57,7 +137,7 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <p className="text-sm text-spiritual-brown/70">Total Users</p>
-                  <p className="text-2xl font-bold text-spiritual-brown">1,245</p>
+                  <p className="text-2xl font-bold text-spiritual-brown">{profiles?.length || 0}</p>
                 </div>
               </CardContent>
             </Card>
@@ -99,33 +179,6 @@ const AdminDashboard = () => {
             </Card>
           </div>
           
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Monitor the latest activities on your platform</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex justify-between items-center border-b pb-3 border-spiritual-gold/10">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 rounded-full bg-spiritual-sand flex items-center justify-center mr-3">
-                        <Users className="h-4 w-4 text-spiritual-brown" />
-                      </div>
-                      <div>
-                        <p className="text-spiritual-brown font-medium">User John Doe registered</p>
-                        <p className="text-xs text-spiritual-brown/60">2 hours ago</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      View
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          
           <Tabs defaultValue="users" className="w-full">
             <TabsList className="grid grid-cols-4 mb-6">
               <TabsTrigger value="users">Users</TabsTrigger>
@@ -141,35 +194,54 @@ const AdminDashboard = () => {
                   <CardDescription>View and manage your platform users</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-spiritual-gold/10">
-                          <th className="text-left p-2">Name</th>
-                          <th className="text-left p-2">Email</th>
-                          <th className="text-left p-2">Role</th>
-                          <th className="text-left p-2">Joined</th>
-                          <th className="text-left p-2">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[1, 2, 3, 4, 5].map((i) => (
-                          <tr key={i} className="border-b border-spiritual-gold/10">
-                            <td className="p-2">John Doe</td>
-                            <td className="p-2">john.doe@example.com</td>
-                            <td className="p-2">User</td>
-                            <td className="p-2">May 15, 2023</td>
-                            <td className="p-2">
+                  {profilesLoading ? (
+                    <div className="py-10 text-center">
+                      <div className="inline-block animate-spin h-8 w-8 border-4 border-spiritual-gold border-t-transparent rounded-full"></div>
+                      <p className="mt-2 text-spiritual-brown/70">Loading users...</p>
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Admin Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {profiles?.map((profile) => (
+                          <TableRow key={profile.id}>
+                            <TableCell>{profile.first_name} {profile.last_name}</TableCell>
+                            <TableCell>{profile.email}</TableCell>
+                            <TableCell>
+                              {profile.is_admin ? (
+                                <span className="px-2 py-1 bg-spiritual-gold/20 text-spiritual-brown rounded-full text-xs inline-flex items-center">
+                                  <Shield className="h-3 w-3 mr-1" />
+                                  Admin
+                                </span>
+                              ) : (
+                                <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                                  User
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
                               <div className="flex space-x-2">
-                                <Button variant="outline" size="sm">Edit</Button>
-                                <Button variant="outline" size="sm" className="text-destructive">Delete</Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => toggleAdminStatus(profile.id, profile.is_admin)}
+                                >
+                                  {profile.is_admin ? 'Revoke Admin' : 'Make Admin'}
+                                </Button>
                               </div>
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      </TableBody>
+                    </Table>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -183,7 +255,7 @@ const AdminDashboard = () => {
                 <CardContent>
                   <div className="flex justify-end mb-4">
                     <Button className="bg-spiritual-gold hover:bg-spiritual-gold/90">
-                      <Calendar className="h-4 w-4 mr-2" /> Add New Event
+                      <Plus className="h-4 w-4 mr-2" /> Add New Event
                     </Button>
                   </div>
                   <div className="space-y-4">
@@ -200,8 +272,12 @@ const AdminDashboard = () => {
                             </div>
                           </div>
                           <div className="flex space-x-2">
-                            <Button variant="outline" size="sm">Edit</Button>
-                            <Button variant="outline" size="sm" className="text-destructive">Cancel</Button>
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4 mr-2" /> Edit
+                            </Button>
+                            <Button variant="outline" size="sm" className="text-destructive">
+                              <Trash2 className="h-4 w-4 mr-2" /> Delete
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -220,7 +296,7 @@ const AdminDashboard = () => {
                       <CardDescription>Manage your spiritual teachings and resources</CardDescription>
                     </div>
                     <Button className="bg-spiritual-gold hover:bg-spiritual-gold/90">
-                      <BookOpen className="h-4 w-4 mr-2" /> Add New Teaching
+                      <Plus className="h-4 w-4 mr-2" /> Add New Teaching
                     </Button>
                   </div>
                 </CardHeader>
@@ -243,8 +319,12 @@ const AdminDashboard = () => {
                               Published: June 15, 2023
                             </div>
                             <div className="flex space-x-2">
-                              <Button variant="ghost" size="sm">Edit</Button>
-                              <Button variant="ghost" size="sm" className="text-destructive">Delete</Button>
+                              <Button variant="ghost" size="sm">
+                                <Edit className="h-4 w-4 mr-2" /> Edit
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-destructive">
+                                <Trash2 className="h-4 w-4 mr-2" /> Delete
+                              </Button>
                             </div>
                           </div>
                         </CardContent>
