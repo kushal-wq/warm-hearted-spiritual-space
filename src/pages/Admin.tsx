@@ -31,6 +31,12 @@ interface Profile {
   email?: string;
 }
 
+// Define an interface for the auth user structure
+interface AuthUser {
+  id: string;
+  email?: string;
+}
+
 const AdminDashboard = () => {
   const { user, isAdmin, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -55,8 +61,9 @@ const AdminDashboard = () => {
       }
       
       // Combine the data
+      // Use a type assertion to help TypeScript understand the shape of authUsers.users
       const combinedData = profiles.map(profile => {
-        const authUser = authUsers.users.find(u => u.id === profile.id);
+        const authUser = (authUsers.users as AuthUser[]).find(u => u.id === profile.id);
         return {
           ...profile,
           email: authUser?.email || 'Unknown'
