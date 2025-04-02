@@ -1,6 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 
 const Hero = () => {
   const parallaxRef = useRef<HTMLDivElement>(null);
@@ -29,7 +30,7 @@ const Hero = () => {
       {/* Mandala background element */}
       <div 
         ref={mandalaBgRef}
-        className="absolute top-10 right-10 w-[600px] h-[600px] opacity-10 dark:opacity-5 pointer-events-none"
+        className="absolute top-10 right-10 w-[600px] h-[600px] opacity-10 dark:opacity-5 pointer-events-none animate-float"
       >
         <img 
           src="https://cdn.pixabay.com/photo/2017/03/16/21/29/mandala-2150144_960_720.png" 
@@ -37,6 +38,11 @@ const Hero = () => {
           className="w-full h-full"
         />
       </div>
+      
+      {/* Decorative Om symbols */}
+      <div className="om-symbol top-[20%] left-[10%]">🕉️</div>
+      <div className="om-symbol top-[40%] right-[15%]" style={{ animationDelay: "2s" }}>🕉️</div>
+      <div className="om-symbol bottom-[30%] left-[20%]" style={{ animationDelay: "4s" }}>🕉️</div>
       
       <div 
         ref={parallaxRef}
@@ -48,24 +54,27 @@ const Hero = () => {
       <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-start">
         <div 
           ref={contentRef}
-          className="indian-glass p-8 md:p-12 max-w-xl card-3d"
+          className="indian-glass p-8 md:p-12 max-w-xl card-3d animate-fade-in"
         >
-          <h4 className="text-spiritual-saffron mb-2 font-sanskrit text-lg">आत्मिक मार्गदर्शन (Spiritual Guidance)</h4>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 font-sanskrit leading-tight indian-gradient-text">
+          <span className="inline-block px-3 py-1 rounded-full bg-spiritual-saffron/20 text-spiritual-saffron text-sm mb-4">
+            आत्मिक मार्गदर्शन (Spiritual Guidance)
+          </span>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 font-sanskrit leading-tight indian-gradient-text animate-glow">
             Find Inner Peace & Divine Connection
           </h1>
           <p className="text-white/90 mb-8 text-lg">
             Discover authentic spiritual teachings, sacred rituals, and compassionate guidance for your journey toward enlightenment.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Link to="/services" className="indian-button hover:-translate-y-1 transition-all">
+            <Link to="/services" className="indian-button hover:-translate-y-1 transition-all group">
               Book a Consultation
+              <ArrowRight className="inline-block ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
             </Link>
             <div className="relative">
               <Link to="/about" className="bg-white/20 backdrop-blur-sm text-white border border-white/30 px-6 py-2.5 rounded-md shadow-sm hover:shadow-md hover:bg-white/30 hover:-translate-y-1 transition-all duration-300 text-center">
                 Learn More
               </Link>
-              <span className="absolute -top-1 -right-1 bg-spiritual-turmeric text-white text-[10px] px-2 py-0.5 rounded-full font-medium">Popular</span>
+              <span className="absolute -top-1 -right-1 bg-spiritual-turmeric text-white text-[10px] px-2 py-0.5 rounded-full font-medium animate-pulse">Popular</span>
             </div>
           </div>
         </div>
