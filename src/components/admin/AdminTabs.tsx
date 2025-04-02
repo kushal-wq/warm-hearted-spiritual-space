@@ -10,20 +10,32 @@ import { Users, Calendar, BookOpen, Gift } from 'lucide-react';
 const AdminTabs = () => {
   return (
     <Tabs defaultValue="users" className="w-full animate-fade-in">
-      <TabsList className="grid grid-cols-4 mb-8 bg-spiritual-sand/20 p-1 rounded-xl">
-        <TabsTrigger value="users" className="data-[state=active]:bg-spiritual-gold data-[state=active]:text-white">
+      <TabsList className="grid grid-cols-4 mb-8 bg-white/40 dark:bg-gray-800/40 p-1 rounded-xl backdrop-blur-sm border border-white/50 dark:border-gray-700/30">
+        <TabsTrigger 
+          value="users" 
+          className="data-[state=active]:bg-spiritual-gold data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
+        >
           <Users className="h-4 w-4 mr-2" />
           Users
         </TabsTrigger>
-        <TabsTrigger value="events" className="data-[state=active]:bg-spiritual-gold data-[state=active]:text-white">
+        <TabsTrigger 
+          value="events" 
+          className="data-[state=active]:bg-spiritual-gold data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
+        >
           <Calendar className="h-4 w-4 mr-2" />
           Events
         </TabsTrigger>
-        <TabsTrigger value="teachings" className="data-[state=active]:bg-spiritual-gold data-[state=active]:text-white">
+        <TabsTrigger 
+          value="teachings" 
+          className="data-[state=active]:bg-spiritual-gold data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
+        >
           <BookOpen className="h-4 w-4 mr-2" />
           Teachings
         </TabsTrigger>
-        <TabsTrigger value="donations" className="data-[state=active]:bg-spiritual-gold data-[state=active]:text-white">
+        <TabsTrigger 
+          value="donations" 
+          className="data-[state=active]:bg-spiritual-gold data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
+        >
           <Gift className="h-4 w-4 mr-2" />
           Donations
         </TabsTrigger>

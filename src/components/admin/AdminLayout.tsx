@@ -15,9 +15,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <main className="flex-grow bg-gradient-to-b from-spiritual-cream/50 to-white dark:from-gray-900 dark:to-gray-800">
+      <main className="flex-grow bg-gradient-to-b from-spiritual-cream/30 to-white dark:from-gray-900 dark:to-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-spiritual-gold/20 pb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-spiritual-gold/10 pb-6">
             <div className="flex items-center">
               <Link to="/" className="mr-4">
                 <Button variant="ghost" size="icon" className="rounded-full hover:bg-spiritual-gold/10">
@@ -40,7 +40,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             </div>
           </div>
           
-          <div className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl shadow-lg p-6 transition-all hover:shadow-xl">
+          <div className="bg-white/60 dark:bg-gray-800/30 backdrop-blur-md rounded-xl shadow-lg p-6 transition-all hover:shadow-xl border border-white/40 dark:border-gray-700/30">
             {children}
           </div>
         </div>

@@ -34,10 +34,10 @@ const AdminDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-spiritual-cream/30">
-        <div className="p-8 rounded-xl bg-white/50 backdrop-blur-sm shadow-lg flex flex-col items-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-spiritual-cream/30 to-white dark:from-gray-900 dark:to-gray-800">
+        <div className="p-8 rounded-xl bg-white/60 dark:bg-gray-800/30 backdrop-blur-md shadow-lg flex flex-col items-center border border-white/40 dark:border-gray-700/30">
           <div className="animate-spin h-12 w-12 border-4 border-spiritual-gold border-t-transparent rounded-full mb-4"></div>
-          <p className="text-spiritual-brown font-sanskrit text-xl">Loading Admin Dashboard...</p>
+          <p className="text-spiritual-brown dark:text-gray-200 font-sanskrit text-xl">Loading Admin Dashboard...</p>
         </div>
       </div>
     );

@@ -24,7 +24,7 @@
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 240 10% 3.9%;
     --sidebar-border: 240 5.9% 90%;
@@ -76,12 +76,13 @@
   }
 }
 
+/* Basic links and inputs */
 .spiritual-link {
   @apply text-spiritual-brown hover:text-spiritual-gold transition-colors duration-300;
 }
 
 .spiritual-input {
-  @apply border border-spiritual-sand/50 focus:border-spiritual-gold focus:ring-1 focus:ring-spiritual-gold/30 rounded-l-md px-4 py-2 outline-none;
+  @apply border border-spiritual-sand/50 focus:border-spiritual-gold focus:ring-1 focus:ring-spiritual-gold/30 rounded-md px-4 py-2 outline-none;
 }
 
 /* Dark mode overrides */
@@ -113,18 +114,47 @@
   @apply text-gray-500;
 }
 
-/* Additional classes */
+/* Enhanced styles for minimalism */
 .font-sanskrit {
   font-family: 'Playfair Display', serif;
 }
 
-/* Card and Button styles */
+/* Card and Button styles - now more minimal */
 .spiritual-card {
-  @apply bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-xl border border-spiritual-gold/10 shadow-md hover:shadow-lg transition-all duration-300;
+  @apply bg-white/70 dark:bg-gray-800/40 backdrop-blur-md rounded-xl border border-white/40 dark:border-gray-700/30 shadow-sm hover:shadow-md transition-all duration-300;
 }
 
 .spiritual-button {
-  @apply bg-spiritual-gold text-white px-6 py-3 rounded-md shadow-md hover:bg-spiritual-gold/90 transition-colors duration-300 text-center;
+  @apply bg-spiritual-gold text-white px-6 py-2.5 rounded-md shadow-sm hover:shadow-md hover:bg-spiritual-gold/90 transition-all duration-300 text-center;
+}
+
+/* Glass morphism effects for cards */
+.glass-card {
+  @apply bg-white/40 dark:bg-gray-800/30 backdrop-blur-md border border-white/40 dark:border-gray-700/30 rounded-xl shadow-sm;
+}
+
+/* 3D effect for cards */
+.card-3d {
+  @apply transition-transform duration-300 transform perspective-1000 hover:rotate-y-3 hover:rotate-x-3 hover:-translate-y-1;
+}
+
+/* Parallax container */
+.parallax-container {
+  @apply overflow-hidden relative;
+  perspective: 1px;
+}
+
+.parallax-layer {
+  @apply absolute inset-0 w-full h-full;
+  transform-style: preserve-3d;
+}
+
+.parallax-layer-back {
+  transform: translateZ(-1px) scale(2);
+}
+
+.parallax-layer-base {
+  transform: translateZ(0);
 }
 
 /* Animation utilities */
@@ -148,6 +178,11 @@
   50% { opacity: 0.7; }
 }
 
+@keyframes rotate-3d {
+  0% { transform: rotate3d(0, 0, 0, 0deg); }
+  100% { transform: rotate3d(0, 1, 0, 360deg); }
+}
+
 .animate-fade-in {
   animation: fade-in 0.5s ease-out forwards;
 }
@@ -164,7 +199,54 @@
   animation: glow 2s ease-in-out infinite;
 }
 
+.animate-rotate-3d {
+  animation: rotate-3d 10s linear infinite;
+}
+
 /* Gradient text */
 .gradient-text {
   @apply bg-gradient-to-r from-spiritual-brown to-spiritual-gold bg-clip-text text-transparent;
+}
+
+/* Perspective utilities for 3D */
+.perspective-500 {
+  perspective: 500px;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.perspective-2000 {
+  perspective: 2000px;
+}
+
+/* 3D transforms */
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.rotate-x-3 {
+  transform: rotateX(3deg);
+}
+
+.rotate-y-3 {
+  transform: rotateY(3deg);
+}
+
+/* Minimalist scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-spiritual-gold/50 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-spiritual-gold;
 }
