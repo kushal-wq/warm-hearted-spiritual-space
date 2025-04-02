@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Sparkles, Home, Yoga, Flower } from 'lucide-react';
+import { Calendar, Sparkles, Home, Flower, CloudLightning } from 'lucide-react';
 
 const services = [
   {
@@ -28,7 +28,7 @@ const services = [
   {
     title: "Yoga & Meditation",
     description: "Learn ancient meditation techniques for inner peace and spiritual growth.",
-    icon: Yoga,
+    icon: CloudLightning, // Replace with a proper icon that exists in lucide-react
     price: "₹799",
     link: "/services",
   },

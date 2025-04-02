@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -137,13 +136,46 @@ export default {
 				'gold-gradient': 'linear-gradient(135deg, #FFC72C 0%, #FDF5E6 100%)',
 				'mandala-pattern': 'url("https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-4.0.3")'
 			},
-			// Add perspective utilities to fix the CSS error
 			perspective: {
+				none: 'none',
 				'500': '500px',
 				'1000': '1000px',
 				'2000': '2000px',
+			},
+			transformStyle: {
+				'3d': 'preserve-3d',
+				'flat': 'flat',
+			},
+			rotate: {
+				'-2': '-2deg',
+				'-1': '-1deg',
+				'1': '1deg',
+				'2': '2deg',
+				'3': '3deg',
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [
+		require("tailwindcss-animate"),
+		function({ addUtilities, theme }) {
+			const perspectiveUtilities = Object.entries(theme('perspective') || {}).reduce(
+				(acc, [key, value]) => ({
+					...acc,
+					[`.perspective-${key}`]: { perspective: value },
+				}),
+				{}
+			);
+			
+			const transformStyleUtilities = Object.entries(theme('transformStyle') || {}).reduce(
+				(acc, [key, value]) => ({
+					...acc,
+					[`.transform-style-${key}`]: { 'transform-style': value },
+				}),
+				{}
+			);
+			
+			addUtilities(perspectiveUtilities);
+			addUtilities(transformStyleUtilities);
+		}
+	],
 } satisfies Config;
