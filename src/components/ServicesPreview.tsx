@@ -28,7 +28,7 @@ const services = [
   {
     title: "Yoga & Meditation",
     description: "Learn ancient meditation techniques for inner peace and spiritual growth.",
-    icon: CloudLightning, // Replace with a proper icon that exists in lucide-react
+    icon: CloudLightning, // Using CloudLightning instead of Yoga which doesn't exist in lucide-react
     price: "₹799",
     link: "/services",
   },
