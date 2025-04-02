@@ -136,6 +136,12 @@ export default {
 				'spiritual-gradient': 'linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,153,51,0.2))',
 				'gold-gradient': 'linear-gradient(135deg, #FFC72C 0%, #FDF5E6 100%)',
 				'mandala-pattern': 'url("https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-4.0.3")'
+			},
+			// Add perspective utilities to fix the CSS error
+			perspective: {
+				'500': '500px',
+				'1000': '1000px',
+				'2000': '2000px',
 			}
 		}
 	},
