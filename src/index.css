@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -187,6 +188,12 @@
 @keyframes scale-in {
   from { transform: scale(0.95); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+/* Define the chakra-spin animation used by the rangoli-spinner */
+@keyframes chakra-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .animate-fade-in {
