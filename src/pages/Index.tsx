@@ -29,7 +29,8 @@ const Index = () => {
       scrollSections.forEach((section, index) => {
         const sectionElement = section as HTMLElement;
         // Different scroll speeds for different sections creates parallax effect
-        const speed = index % 2 === 0 ? 0.05 : -0.05;
+        // Reduced the effect slightly for better visual appearance
+        const speed = index % 2 === 0 ? 0.03 : -0.03;
         sectionElement.style.transform = `translateY(${scrollY * speed}px)`;
       });
     };
