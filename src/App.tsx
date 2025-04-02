@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import AIChatGuru from "@/components/AIChatGuru";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Services from "./pages/Services";
@@ -41,6 +42,10 @@ const App = () => (
               <Route path="/profile" element={<Profile />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
+            </Routes>
+            {/* Add the AI Chat Guru to all pages except Index (as it's already there) */}
+            <Routes>
+              <Route path="/*" element={location.pathname !== "/" ? <AIChatGuru /> : null} />
             </Routes>
           </BrowserRouter>
         </TooltipProvider>

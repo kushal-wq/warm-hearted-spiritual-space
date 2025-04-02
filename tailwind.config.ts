@@ -21,6 +21,7 @@ export default {
 		extend: {
 			fontFamily: {
 				sanskrit: ['Playfair Display', 'serif'],
+				devnagari: ['Poppins', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -29,12 +30,18 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				spiritual: {
+					saffron: '#FF9933', // Indian flag saffron
+					white: '#FFFFFF',   // Indian flag white
+					green: '#138808',   // Indian flag green
 					gold: '#D4AF37',
-					saffron: '#F4C430',
 					cream: '#FDF5E6',
 					brown: '#8B4513',
 					sand: '#F5DEB3',
 					sage: '#BCB88A',
+					maroon: '#800000',  // Traditional Indian color
+					turmeric: '#FFC72C', // Turmeric yellow
+					peacock: '#324851', // Peacock blue-green
+					lotus: '#FE6B9E',   // Lotus pink
 				},
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
@@ -80,11 +87,6 @@ export default {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
-			// Add custom rotation transforms
-			rotate: {
-				'y-3': 'rotateY(3deg)',
-				'x-3': 'rotateX(3deg)',
-			},
 			keyframes: {
 				'accordion-down': {
 					from: {
@@ -117,17 +119,23 @@ export default {
 					'50%': {
 						opacity: '0.6'
 					}
+				},
+				'chakra-spin': {
+					'0%': { transform: 'rotate(0deg)' },
+					'100%': { transform: 'rotate(360deg)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'float': 'float 6s ease-in-out infinite',
-				'glow': 'glow 3s ease-in-out infinite'
+				'glow': 'glow 3s ease-in-out infinite',
+				'chakra-spin': 'chakra-spin 10s linear infinite'
 			},
 			backgroundImage: {
-				'spiritual-gradient': 'linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(245,222,179,0.7))',
-				'gold-gradient': 'linear-gradient(135deg, #D4AF37 0%, #FDF5E6 100%)'
+				'spiritual-gradient': 'linear-gradient(to bottom, rgba(255,255,255,0.8), rgba(255,153,51,0.2))',
+				'gold-gradient': 'linear-gradient(135deg, #FFC72C 0%, #FDF5E6 100%)',
+				'mandala-pattern': 'url("https://images.unsplash.com/photo-1579546929518-9e396f3cc809?ixlib=rb-4.0.3")'
 			}
 		}
 	},

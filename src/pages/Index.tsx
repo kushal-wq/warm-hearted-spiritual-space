@@ -8,6 +8,7 @@ import ServicesPreview from '../components/ServicesPreview';
 import UpcomingEvents from '../components/UpcomingEvents';
 import Testimonials from '../components/Testimonials';
 import DonatePreview from '../components/DonatePreview';
+import AIChatGuru from '../components/AIChatGuru';
 
 const Index = () => {
   // Add smooth scrolling effect
@@ -28,7 +29,7 @@ const Index = () => {
       scrollSections.forEach((section, index) => {
         const sectionElement = section as HTMLElement;
         // Different scroll speeds for different sections creates parallax effect
-        const speed = index % 2 === 0 ? 0.1 : -0.1;
+        const speed = index % 2 === 0 ? 0.05 : -0.05;
         sectionElement.style.transform = `translateY(${scrollY * speed}px)`;
       });
     };
@@ -38,7 +39,7 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-secondary/30">
       <Navbar />
       <main className="flex-grow">
         <Hero />
@@ -59,6 +60,7 @@ const Index = () => {
         </section>
       </main>
       <Footer />
+      <AIChatGuru />
     </div>
   );
 };
