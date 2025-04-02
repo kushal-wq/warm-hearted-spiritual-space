@@ -80,6 +80,11 @@ export default {
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
+			// Add custom rotation transforms
+			rotate: {
+				'y-3': 'rotateY(3deg)',
+				'x-3': 'rotateX(3deg)',
+			},
 			keyframes: {
 				'accordion-down': {
 					from: {
