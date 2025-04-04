@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, Edit, Plus, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { EventsAPI } from '@/api/supabaseUtils';
 import {
   Dialog,
   DialogContent,
@@ -106,14 +105,8 @@ const EventsTab = () => {
   const fetchEvents = async () => {
     try {
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('date', { ascending: true });
-      
-      if (error) throw error;
-      
-      setEvents(data || []);
+      const data = await EventsAPI.getAll();
+      setEvents(data);
     } catch (error) {
       console.error('Error fetching events:', error);
       toast({
@@ -139,18 +132,17 @@ const EventsTab = () => {
   const handleDeleteEvent = async (eventId: string) => {
     try {
       setIsDeleting(eventId);
-      const { error } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', eventId);
+      const success = await EventsAPI.delete(eventId);
       
-      if (error) throw error;
-      
-      setEvents(events.filter(event => event.id !== eventId));
-      toast({
-        title: "Event Deleted",
-        description: "The event has been successfully deleted.",
-      });
+      if (success) {
+        setEvents(events.filter(event => event.id !== eventId));
+        toast({
+          title: "Event Deleted",
+          description: "The event has been successfully deleted.",
+        });
+      } else {
+        throw new Error("Failed to delete the event");
+      }
     } catch (error: any) {
       console.error('Error deleting event:', error);
       toast({
@@ -169,38 +161,34 @@ const EventsTab = () => {
       
       if (editingEvent) {
         // Update existing event
-        const { error } = await supabase
-          .from('events')
-          .update(values)
-          .eq('id', editingEvent.id);
+        const success = await EventsAPI.update(editingEvent.id, values);
         
-        if (error) throw error;
-        
-        setEvents(events.map(event => 
-          event.id === editingEvent.id ? { ...event, ...values } : event
-        ));
-        
-        toast({
-          title: "Event Updated",
-          description: "The event has been successfully updated.",
-        });
+        if (success) {
+          setEvents(events.map(event => 
+            event.id === editingEvent.id ? { ...event, ...values } : event
+          ));
+          
+          toast({
+            title: "Event Updated",
+            description: "The event has been successfully updated.",
+          });
+        } else {
+          throw new Error("Failed to update the event");
+        }
       } else {
         // Create new event
-        const { data, error } = await supabase
-          .from('events')
-          .insert(values)
-          .select();
+        const newEvent = await EventsAPI.create(values);
         
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          setEvents([...events, data[0]]);
+        if (newEvent) {
+          setEvents([...events, newEvent]);
+          
+          toast({
+            title: "Event Created",
+            description: "The new event has been successfully added.",
+          });
+        } else {
+          throw new Error("Failed to create the event");
         }
-        
-        toast({
-          title: "Event Created",
-          description: "The new event has been successfully added.",
-        });
       }
       
       setOpenDialog(false);

@@ -2,35 +2,59 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Clock, Users } from 'lucide-react';
-
-const events = [
-  {
-    id: 1,
-    title: "Navratri Celebration",
-    date: "October 7-15, 2023",
-    time: "6:00 PM - 9:00 PM",
-    location: "Temple Gardens, Delhi",
-    description: "Join us for nine nights of devotion, music, and dance honoring the divine feminine energy.",
-  },
-  {
-    id: 2,
-    title: "Meditation Retreat",
-    date: "November 5-7, 2023",
-    time: "All Day",
-    location: "Rishikesh Sanctuary",
-    description: "A weekend of deep meditation, yoga practices, and spiritual teachings by the sacred Ganges.",
-  },
-  {
-    id: 3,
-    title: "Bhagavad Gita Discourse",
-    date: "November 15, 2023",
-    time: "6:30 PM - 8:00 PM",
-    location: "Community Hall, Mumbai",
-    description: "An enlightening talk on finding purpose and meaning through the timeless wisdom of the Gita.",
-  },
-];
+import { useQuery } from '@tanstack/react-query';
+import { EventsAPI, Event } from '@/api/supabaseUtils';
 
 const UpcomingEvents = () => {
+  const { data: events = [] } = useQuery<Event[]>({
+    queryKey: ['upcomingEvents'],
+    queryFn: async () => {
+      const allEvents = await EventsAPI.getAll();
+      // Return the first 3 events or use mock data if no events are found
+      if (allEvents.length > 0) {
+        return allEvents.slice(0, 3);
+      }
+      
+      // Mock data as fallback
+      return [
+        {
+          id: "1",
+          title: "Navratri Celebration",
+          date: "October 7-15, 2023",
+          time: "6:00 PM - 9:00 PM",
+          location: "Temple Gardens, Delhi",
+          description: "Join us for nine nights of devotion, music, and dance honoring the divine feminine energy.",
+          imageUrl: "/placeholder.svg",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: "2",
+          title: "Meditation Retreat",
+          date: "November 5-7, 2023",
+          time: "All Day",
+          location: "Rishikesh Sanctuary",
+          description: "A weekend of deep meditation, yoga practices, and spiritual teachings by the sacred Ganges.",
+          imageUrl: "/placeholder.svg",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: "3",
+          title: "Bhagavad Gita Discourse",
+          date: "November 15, 2023",
+          time: "6:30 PM - 8:00 PM",
+          location: "Community Hall, Mumbai",
+          description: "An enlightening talk on finding purpose and meaning through the timeless wisdom of the Gita.",
+          imageUrl: "/placeholder.svg",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+      ];
+    },
+    staleTime: 1000 * 60 * 5 // 5 minutes
+  });
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div className="text-center mb-12">
@@ -69,10 +93,10 @@ const UpcomingEvents = () => {
               <Link to={`/events/${event.id}`} className="indian-link">
                 Read more
               </Link>
-              <button className="bg-spiritual-saffron/10 text-spiritual-saffron hover:bg-spiritual-saffron/20 px-4 py-2 rounded-md transition-colors duration-300 flex items-center">
+              <Link to="/events" className="bg-spiritual-saffron/10 text-spiritual-saffron hover:bg-spiritual-saffron/20 px-4 py-2 rounded-md transition-colors duration-300 flex items-center">
                 <Users className="h-4 w-4 mr-2" />
                 RSVP
-              </button>
+              </Link>
             </div>
           </div>
         ))}

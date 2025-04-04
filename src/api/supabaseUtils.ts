@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
 
 // Types
 export type EventRegistration = {
@@ -54,7 +55,7 @@ export const EventsAPI = {
         .order('date', { ascending: true });
         
       if (error) throw error;
-      return data || [];
+      return data as unknown as Event[] || [];
     } catch (error) {
       console.error('Error fetching all events:', error);
       return [];
@@ -70,7 +71,7 @@ export const EventsAPI = {
         .single();
         
       if (error) throw error;
-      return data;
+      return data as unknown as Event;
     } catch (error) {
       console.error(`Error fetching event with ID ${id}:`, error);
       return null;
@@ -81,12 +82,31 @@ export const EventsAPI = {
     try {
       const { data, error } = await supabase
         .from('events')
-        .insert(event)
+        .insert({
+          title: event.title,
+          date: event.date,
+          time: event.time,
+          location: event.location,
+          description: event.description,
+          imageurl: event.imageUrl
+        })
         .select()
         .single();
         
       if (error) throw error;
-      return data;
+      
+      // Map the returned data to our Event type
+      return {
+        id: data.id,
+        title: data.title,
+        date: data.date,
+        time: data.time,
+        location: data.location,
+        description: data.description,
+        imageUrl: data.imageurl,
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      };
     } catch (error) {
       console.error('Error creating event:', error);
       return null;
@@ -95,9 +115,16 @@ export const EventsAPI = {
   
   update: async (id: string, event: Partial<Event>): Promise<boolean> => {
     try {
+      // Map from our Event type to the database column names
+      const dbEvent: any = { ...event };
+      if (event.imageUrl) {
+        dbEvent.imageurl = event.imageUrl;
+        delete dbEvent.imageUrl;
+      }
+      
       const { error } = await supabase
         .from('events')
-        .update(event)
+        .update(dbEvent)
         .eq('id', id);
         
       if (error) throw error;
@@ -166,7 +193,7 @@ export const RegistrationsAPI = {
         .eq('user_id', userId);
         
       if (error) throw error;
-      return data || [];
+      return data as unknown as EventRegistration[] || [];
     } catch (error) {
       console.error(`Error fetching registrations for user ${userId}:`, error);
       return [];
@@ -181,7 +208,7 @@ export const RegistrationsAPI = {
         .eq('event_id', eventId);
         
       if (error) throw error;
-      return data || [];
+      return data as unknown as EventRegistration[] || [];
     } catch (error) {
       console.error(`Error fetching registrations for event ${eventId}:`, error);
       return [];
@@ -213,7 +240,7 @@ export const ServicesAPI = {
         .select('*');
         
       if (error) throw error;
-      return data || [];
+      return data as unknown as Service[] || [];
     } catch (error) {
       console.error('Error fetching all services:', error);
       return [];
@@ -229,7 +256,7 @@ export const ServicesAPI = {
         .single();
         
       if (error) throw error;
-      return data;
+      return data as unknown as Service;
     } catch (error) {
       console.error(`Error fetching service with ID ${id}:`, error);
       return null;
@@ -240,12 +267,18 @@ export const ServicesAPI = {
     try {
       const { data, error } = await supabase
         .from('services')
-        .insert(service)
+        .insert({
+          title: service.title,
+          description: service.description,
+          duration: service.duration,
+          price: service.price,
+          icon: service.icon
+        })
         .select()
         .single();
         
       if (error) throw error;
-      return data;
+      return data as unknown as Service;
     } catch (error) {
       console.error('Error creating service:', error);
       return null;
@@ -333,7 +366,7 @@ export const BookingsAPI = {
         .order('booking_date', { ascending: true });
         
       if (error) throw error;
-      return data || [];
+      return data as unknown as ServiceBooking[] || [];
     } catch (error) {
       console.error(`Error fetching bookings for user ${userId}:`, error);
       return [];
@@ -349,7 +382,7 @@ export const BookingsAPI = {
         .order('booking_date', { ascending: true });
         
       if (error) throw error;
-      return data || [];
+      return data as unknown as ServiceBooking[] || [];
     } catch (error) {
       console.error(`Error fetching bookings for service ${serviceId}:`, error);
       return [];

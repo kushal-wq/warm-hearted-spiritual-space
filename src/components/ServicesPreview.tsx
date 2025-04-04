@@ -2,43 +2,92 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Sparkles, Home, Flower, CloudSun } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { ServicesAPI, Service } from '@/api/supabaseUtils';
 
-const services = [
-  {
-    title: "Spiritual Consultation",
-    description: "One-on-one guidance for your spiritual journey and personal challenges.",
-    icon: Sparkles,
-    price: "₹999",
-    link: "/services",
-    featured: true,
-  },
-  {
-    title: "Sacred Rituals",
-    description: "Traditional ceremonies for healing, spiritual cleansing and life events.",
-    icon: Flower,
-    price: "₹2,499",
-    link: "/services",
-    featured: false,
-  },
-  {
-    title: "Family Blessings",
-    description: "Special prayers and rituals to bring harmony and prosperity to your home.",
-    icon: Home,
-    price: "₹1,499",
-    link: "/services",
-    featured: false,
-  },
-  {
-    title: "Yoga & Meditation",
-    description: "Learn ancient meditation techniques for inner peace and spiritual growth.",
-    icon: CloudSun, // Using CloudSun instead of Yoga (which doesn't exist in lucide-react)
-    price: "₹799",
-    link: "/services",
-    featured: false,
-  },
-];
+const iconMap: Record<string, any> = {
+  "✨": Sparkles,
+  "🏠": Home,
+  "🌸": Flower,
+  "☀️": CloudSun,
+  // Add more mappings as needed for other emoji icons
+};
 
 const ServicesPreview = () => {
+  const { data: services = [] } = useQuery<Service[]>({
+    queryKey: ['servicesPreview'],
+    queryFn: async () => {
+      const allServices = await ServicesAPI.getAll();
+      
+      // If we have services from the database, transform them for display
+      if (allServices.length > 0) {
+        // Take 4 services for preview
+        return allServices.slice(0, 4).map((service, index) => ({
+          ...service,
+          featured: index === 0, // Make the first one featured
+        }));
+      }
+      
+      // Mock data as fallback
+      return [
+        {
+          id: "1",
+          title: "Spiritual Consultation",
+          description: "One-on-one guidance for your spiritual journey and personal challenges.",
+          duration: "60 minutes",
+          price: "₹999",
+          icon: "✨",
+          featured: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: "2",
+          title: "Sacred Rituals",
+          description: "Traditional ceremonies for healing, spiritual cleansing and life events.",
+          duration: "90 minutes",
+          price: "₹2,499",
+          icon: "🌸",
+          featured: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: "3",
+          title: "Family Blessings",
+          description: "Special prayers and rituals to bring harmony and prosperity to your home.",
+          duration: "60 minutes",
+          price: "₹1,499",
+          icon: "🏠",
+          featured: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: "4",
+          title: "Yoga & Meditation",
+          description: "Learn ancient meditation techniques for inner peace and spiritual growth.",
+          duration: "60 minutes",
+          price: "₹799",
+          icon: "☀️",
+          featured: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+      ];
+    },
+    staleTime: 1000 * 60 * 5 // 5 minutes
+  });
+
+  // Helper function to get the icon component
+  const getIconComponent = (iconString: string) => {
+    if (iconMap[iconString]) {
+      return iconMap[iconString];
+    }
+    // Default icon if no mapping found
+    return Sparkles;
+  };
+
   return (
     <div className="py-16 relative overflow-hidden">
       {/* Decorative elements */}
@@ -69,30 +118,34 @@ const ServicesPreview = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {services.map((service, index) => (
-            <div 
-              key={index} 
-              className={`${service.featured ? 'featured-card transform scale-105 z-10' : 'indian-card'} p-6 flex flex-col h-full card-3d animate-fade-in`}
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              {service.featured && (
-                <div className="absolute top-0 right-0 bg-spiritual-gold text-white text-xs px-3 py-1 font-medium">
-                  Popular
+          {services.map((service, index) => {
+            const IconComponent = getIconComponent(service.icon);
+            
+            return (
+              <div 
+                key={service.id} 
+                className={`${service.featured ? 'featured-card transform scale-105 z-10' : 'indian-card'} p-6 flex flex-col h-full card-3d animate-fade-in`}
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                {service.featured && (
+                  <div className="absolute top-0 right-0 bg-spiritual-gold text-white text-xs px-3 py-1 font-medium">
+                    Popular
+                  </div>
+                )}
+                <div className={`${service.featured ? 'bg-spiritual-gold/20' : 'bg-spiritual-saffron/10'} dark:bg-spiritual-saffron/20 p-3 rounded-lg w-12 h-12 flex items-center justify-center mb-4`}>
+                  <IconComponent className={`h-6 w-6 ${service.featured ? 'text-spiritual-gold' : 'text-spiritual-saffron'}`} />
                 </div>
-              )}
-              <div className={`${service.featured ? 'bg-spiritual-gold/20' : 'bg-spiritual-saffron/10'} dark:bg-spiritual-saffron/20 p-3 rounded-lg w-12 h-12 flex items-center justify-center mb-4`}>
-                <service.icon className={`h-6 w-6 ${service.featured ? 'text-spiritual-gold' : 'text-spiritual-saffron'}`} />
+                <h3 className="text-xl font-sanskrit text-foreground mb-2">{service.title}</h3>
+                <p className="text-muted-foreground mb-4 flex-grow">{service.description}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="font-bold text-foreground">{service.price}</span>
+                  <Link to="/services" className="indian-link">
+                    View Details
+                  </Link>
+                </div>
               </div>
-              <h3 className="text-xl font-sanskrit text-foreground mb-2">{service.title}</h3>
-              <p className="text-muted-foreground mb-4 flex-grow">{service.description}</p>
-              <div className="flex items-center justify-between mt-2">
-                <span className="font-bold text-foreground">{service.price}</span>
-                <Link to={service.link} className="indian-link">
-                  View Details
-                </Link>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         
         <div className="mt-12 text-center">

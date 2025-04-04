@@ -8,6 +8,10 @@ import ServicesPreview from '../components/ServicesPreview';
 import UpcomingEvents from '../components/UpcomingEvents';
 import Testimonials from '../components/Testimonials';
 import DonatePreview from '../components/DonatePreview';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// Create a client
+const queryClient = new QueryClient();
 
 const Index = () => {
   // Add smooth scrolling effect
@@ -39,28 +43,30 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-secondary/30">
-      <Navbar />
-      <main className="flex-grow">
-        <Hero />
-        <section className="scroll-section relative z-10">
-          <DailyInspiration />
-        </section>
-        <section className="scroll-section relative z-10">
-          <ServicesPreview />
-        </section>
-        <section className="scroll-section relative z-10">
-          <UpcomingEvents />
-        </section>
-        <section className="scroll-section relative z-10">
-          <Testimonials />
-        </section>
-        <section className="scroll-section relative z-10">
-          <DonatePreview />
-        </section>
-      </main>
-      <Footer />
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <div className="min-h-screen flex flex-col overflow-x-hidden bg-secondary/30">
+        <Navbar />
+        <main className="flex-grow">
+          <Hero />
+          <section className="scroll-section relative z-10">
+            <DailyInspiration />
+          </section>
+          <section className="scroll-section relative z-10">
+            <ServicesPreview />
+          </section>
+          <section className="scroll-section relative z-10">
+            <UpcomingEvents />
+          </section>
+          <section className="scroll-section relative z-10">
+            <Testimonials />
+          </section>
+          <section className="scroll-section relative z-10">
+            <DonatePreview />
+          </section>
+        </main>
+        <Footer />
+      </div>
+    </QueryClientProvider>
   );
 };
 

@@ -1,12 +1,11 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Link } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { ServicesAPI, BookingsAPI, Service } from '@/api/supabaseUtils';
 import {
   Dialog,
   DialogContent,
@@ -38,15 +37,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { cn } from '@/lib/utils';
-
-type Service = {
-  id: string;
-  title: string;
-  description: string;
-  duration: string;
-  price: string;
-  icon: string;
-};
+import { useQuery } from '@tanstack/react-query';
 
 const formSchema = z.object({
   date: z.date({
@@ -56,8 +47,6 @@ const formSchema = z.object({
 });
 
 const Services = () => {
-  const [services, setServices] = useState<Service[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const { toast } = useToast();
@@ -71,24 +60,14 @@ const Services = () => {
     },
   });
 
-  useEffect(() => {
-    fetchServices();
-  }, []);
-
-  const fetchServices = async () => {
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('services')
-        .select('*');
+  const { data: services = [], isLoading } = useQuery<Service[]>({
+    queryKey: ['services'],
+    queryFn: async () => {
+      const data = await ServicesAPI.getAll();
       
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        setServices(data);
-      } else {
-        // If no data from Supabase, use local mock data
-        const mockServices = [
+      // If no data from Supabase, use local mock data
+      if (data.length === 0) {
+        return [
           {
             id: "1",
             title: "Spiritual Consultation",
@@ -96,6 +75,8 @@ const Services = () => {
             duration: "60 minutes",
             price: "$75",
             icon: "🙏",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           {
             id: "2",
@@ -104,6 +85,8 @@ const Services = () => {
             duration: "90 minutes",
             price: "$120",
             icon: "🏠",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           {
             id: "3",
@@ -112,6 +95,8 @@ const Services = () => {
             duration: "2-3 hours",
             price: "$350",
             icon: "💍",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           {
             id: "4",
@@ -120,6 +105,8 @@ const Services = () => {
             duration: "60 minutes",
             price: "$95",
             icon: "👶",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           {
             id: "5",
@@ -128,6 +115,8 @@ const Services = () => {
             duration: "75 minutes",
             price: "$90",
             icon: "✨",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           {
             id: "6",
@@ -136,6 +125,8 @@ const Services = () => {
             duration: "60 minutes",
             price: "$65",
             icon: "🧘",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           {
             id: "7",
@@ -144,6 +135,8 @@ const Services = () => {
             duration: "45 minutes",
             price: "$60",
             icon: "🕯️",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           {
             id: "8",
@@ -152,21 +145,15 @@ const Services = () => {
             duration: "3-4 hours",
             price: "Donation based",
             icon: "🎉",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
         ];
-        setServices(mockServices);
       }
-    } catch (error) {
-      console.error('Error fetching services:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch services. Please try again later.",
-      });
-    } finally {
-      setIsLoading(false);
+      
+      return data;
     }
-  };
+  });
 
   const handleBookNow = (service: Service) => {
     if (!user) {
@@ -187,16 +174,17 @@ const Services = () => {
     if (!selectedService || !user) return;
 
     try {
-      const { error } = await supabase
-        .from('service_bookings')
-        .insert({
-          service_id: selectedService.id,
-          user_id: user.id,
-          booking_date: values.date.toISOString(),
-          notes: values.notes || null,
-        });
+      const bookingDate = values.date.toISOString();
+      const success = await BookingsAPI.book(
+        user.id,
+        selectedService.id,
+        bookingDate,
+        values.notes
+      );
 
-      if (error) throw error;
+      if (!success) {
+        throw new Error("Failed to book the service");
+      }
 
       toast({
         title: "Booking Successful",

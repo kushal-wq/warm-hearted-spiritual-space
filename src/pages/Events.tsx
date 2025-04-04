@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,19 +9,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-
-// Define the Event type
-type Event = {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  description: string;
-  imageUrl: string;
-  isRegistered?: boolean;
-};
+import { EventsAPI, RegistrationsAPI, Event } from '@/api/supabaseUtils';
 
 const Events = () => {
   const { toast } = useToast();
@@ -31,18 +19,12 @@ const Events = () => {
 
   const fetchEvents = async (): Promise<Event[]> => {
     try {
-      // Fetch events from Supabase
-      const { data: eventsData, error: eventsError } = await supabase
-        .from('events')
-        .select('*');
+      // Fetch events
+      const events = await EventsAPI.getAll();
       
-      if (eventsError) throw eventsError;
-      
-      let events = eventsData || [];
-      
-      // If no events in Supabase, use mock data
+      // If no events, use mock data
       if (events.length === 0) {
-        events = [
+        return [
           {
             id: "1",
             title: "New Moon Meditation Circle",
@@ -50,7 +32,9 @@ const Events = () => {
             time: "7:00 PM - 9:00 PM",
             location: "Divine Temple Garden, 123 Peace St",
             description: "Join us for a powerful group meditation during the new moon to set intentions and connect with divine energy.",
-            imageUrl: "/placeholder.svg"
+            imageUrl: "/placeholder.svg",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           {
             id: "2",
@@ -59,7 +43,9 @@ const Events = () => {
             time: "5:30 AM - 7:00 AM",
             location: "Riverside Sanctuary, 456 Harmony Ave",
             description: "A traditional fire ceremony (havan) to purify the atmosphere and invoke divine blessings.",
-            imageUrl: "/placeholder.svg"
+            imageUrl: "/placeholder.svg",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           {
             id: "3",
@@ -68,7 +54,9 @@ const Events = () => {
             time: "6:30 PM - 8:30 PM",
             location: "Wisdom Center, 789 Enlightenment Blvd",
             description: "Weekly gathering to study and discuss the profound teachings of the Bhagavad Gita.",
-            imageUrl: "/placeholder.svg"
+            imageUrl: "/placeholder.svg",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           {
             id: "4",
@@ -77,7 +65,9 @@ const Events = () => {
             time: "8:00 PM - 9:30 PM",
             location: "Crystal Dome, 321 Serenity Way",
             description: "Experience the healing vibrations of crystal bowls, gongs, and mantras during the full moon.",
-            imageUrl: "/placeholder.svg"
+            imageUrl: "/placeholder.svg",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           {
             id: "5",
@@ -86,7 +76,9 @@ const Events = () => {
             time: "Friday 4:00 PM - Sunday 2:00 PM",
             location: "Mountain Ashram, 555 Elevation Ridge",
             description: "An immersive weekend of meditation, yoga, silence, and spiritual teachings to deepen your practice.",
-            imageUrl: "/placeholder.svg"
+            imageUrl: "/placeholder.svg",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           },
           {
             id: "6",
@@ -95,24 +87,20 @@ const Events = () => {
             time: "7:00 PM - 10:00 PM",
             location: "Community Temple, 888 Light Path",
             description: "Celebrate the return of the light with sacred rituals, music, and community gathering.",
-            imageUrl: "/placeholder.svg"
+            imageUrl: "/placeholder.svg",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           }
         ];
       }
       
       // If user is logged in, check for registrations
       if (user) {
-        const { data: registrations, error: registrationsError } = await supabase
-          .from('event_registrations')
-          .select('event_id')
-          .eq('user_id', user.id);
-          
-        if (registrationsError) throw registrationsError;
-        
-        const registeredEventIds = registrations?.map(reg => reg.event_id) || [];
+        const registrations = await RegistrationsAPI.getByUserId(user.id);
+        const registeredEventIds = registrations.map(reg => reg.event_id);
         
         // Mark events as registered if the user has already registered
-        events = events.map(event => ({
+        return events.map(event => ({
           ...event,
           isRegistered: registeredEventIds.includes(event.id)
         }));
@@ -154,12 +142,9 @@ const Events = () => {
       
       if (event?.isRegistered) {
         // Unregister from event
-        const { error } = await supabase
-          .from('event_registrations')
-          .delete()
-          .match({ user_id: user.id, event_id: eventId });
-          
-        if (error) throw error;
+        const success = await RegistrationsAPI.unregister(user.id, eventId);
+        
+        if (!success) throw new Error("Failed to unregister");
         
         toast({
           title: "Registration Cancelled",
@@ -167,14 +152,9 @@ const Events = () => {
         });
       } else {
         // Register for event
-        const { error } = await supabase
-          .from('event_registrations')
-          .insert({
-            user_id: user.id,
-            event_id: eventId
-          });
-          
-        if (error) throw error;
+        const success = await RegistrationsAPI.register(user.id, eventId);
+        
+        if (!success) throw new Error("Failed to register");
         
         const eventTitle = data?.find(e => e.id === eventId)?.title || 'event';
         toast({
