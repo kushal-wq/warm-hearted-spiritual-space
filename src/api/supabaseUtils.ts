@@ -46,6 +46,16 @@ export type Service = {
   updated_at: string;
 };
 
+export type ContactSubmission = {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: 'new' | 'in-progress' | 'resolved';
+  created_at: string;
+};
+
 // Event Operations
 export const EventsAPI = {
   getAll: async (): Promise<Event[]> => {
@@ -401,6 +411,39 @@ export const BookingsAPI = {
       return true;
     } catch (error) {
       console.error(`Error updating status for booking ${id}:`, error);
+      return false;
+    }
+  }
+};
+
+// Contact Submissions Operations
+export const ContactAPI = {
+  getAll: async (): Promise<ContactSubmission[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('contact_submissions')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      return data as unknown as ContactSubmission[] || [];
+    } catch (error) {
+      console.error('Error fetching contact submissions:', error);
+      return [];
+    }
+  },
+  
+  updateStatus: async (id: string, status: ContactSubmission['status']): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('contact_submissions')
+        .update({ status })
+        .eq('id', id);
+        
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error(`Error updating contact submission status:`, error);
       return false;
     }
   }

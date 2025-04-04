@@ -5,12 +5,13 @@ import UsersTab from './tabs/UsersTab';
 import EventsTab from './tabs/EventsTab';
 import TeachingsTab from './tabs/TeachingsTab';
 import DonationsTab from './tabs/DonationsTab';
-import { Users, Calendar, BookOpen, Gift } from 'lucide-react';
+import ContactTab from './tabs/ContactTab';
+import { Users, Calendar, BookOpen, Gift, Mail } from 'lucide-react';
 
 const AdminTabs = () => {
   return (
     <Tabs defaultValue="users" className="w-full animate-fade-in">
-      <TabsList className="grid grid-cols-4 mb-8 bg-white/40 dark:bg-gray-800/40 p-1 rounded-xl backdrop-blur-sm border border-white/50 dark:border-gray-700/30">
+      <TabsList className="grid grid-cols-5 mb-8 bg-white/40 dark:bg-gray-800/40 p-1 rounded-xl backdrop-blur-sm border border-white/50 dark:border-gray-700/30">
         <TabsTrigger 
           value="users" 
           className="data-[state=active]:bg-spiritual-gold data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
@@ -39,6 +40,13 @@ const AdminTabs = () => {
           <Gift className="h-4 w-4 mr-2" />
           Donations
         </TabsTrigger>
+        <TabsTrigger 
+          value="contact" 
+          className="data-[state=active]:bg-spiritual-gold data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300"
+        >
+          <Mail className="h-4 w-4 mr-2" />
+          Contact
+        </TabsTrigger>
       </TabsList>
       
       <TabsContent value="users" className="animate-fade-in">
@@ -55,6 +63,10 @@ const AdminTabs = () => {
       
       <TabsContent value="donations" className="animate-fade-in">
         <DonationsTab />
+      </TabsContent>
+      
+      <TabsContent value="contact" className="animate-fade-in">
+        <ContactTab />
       </TabsContent>
     </Tabs>
   );

@@ -12,6 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Mail, MapPin, Phone, Send } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
+import { supabase } from '@/integrations/supabase/client';
 
 const contactSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -33,13 +34,34 @@ const Contact = () => {
     },
   });
 
-  const onSubmit = (values: ContactFormValues) => {
-    console.log("Contact form submitted:", values);
-    toast({
-      title: "Message Sent",
-      description: "Thank you for contacting us. We will respond to your message shortly.",
-    });
-    form.reset();
+  const onSubmit = async (values: ContactFormValues) => {
+    try {
+      // Save to Supabase
+      const { error } = await supabase
+        .from('contact_submissions')
+        .insert({
+          name: values.name,
+          email: values.email,
+          subject: values.subject,
+          message: values.message
+        });
+        
+      if (error) throw error;
+      
+      toast({
+        title: "Message Sent",
+        description: "Thank you for contacting us. We will respond to your message shortly.",
+      });
+      
+      form.reset();
+    } catch (error: any) {
+      console.error("Error submitting contact form:", error);
+      toast({
+        title: "Error",
+        description: "There was a problem sending your message. Please try again later.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
