@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { isMobile } = useMobile();
+  const { isMobile } = useIsMobile();
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
