@@ -8,7 +8,6 @@ import ServicesPreview from '../components/ServicesPreview';
 import UpcomingEvents from '../components/UpcomingEvents';
 import Testimonials from '../components/Testimonials';
 import DonatePreview from '../components/DonatePreview';
-import AIChatGuru from '../components/AIChatGuru';
 
 const Index = () => {
   // Add smooth scrolling effect
@@ -61,7 +60,6 @@ const Index = () => {
         </section>
       </main>
       <Footer />
-      <AIChatGuru />
     </div>
   );
 };

@@ -1,77 +1,220 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Link } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { cn } from '@/lib/utils';
 
-const services = [
-  {
-    id: 1,
-    title: "Spiritual Consultation",
-    description: "A one-on-one session with the priest to discuss personal spiritual concerns, receive guidance, and find clarity on life challenges.",
-    duration: "60 minutes",
-    price: "$75",
-    icon: "🙏",
-  },
-  {
-    id: 2,
-    title: "Home Blessing Ceremony",
-    description: "A sacred ritual to purify your living space, remove negative energies, and invite prosperity and harmony into your home.",
-    duration: "90 minutes",
-    price: "$120",
-    icon: "🏠",
-  },
-  {
-    id: 3,
-    title: "Marriage Ceremony",
-    description: "A beautiful, traditional ceremony to unite two souls in the sacred bond of marriage, with personalized vows and rituals.",
-    duration: "2-3 hours",
-    price: "$350",
-    icon: "💍",
-  },
-  {
-    id: 4,
-    title: "Baby Naming & Blessing",
-    description: "A joyous ceremony to welcome a new soul into the world, with name selection based on astrological considerations and blessings for a prosperous life.",
-    duration: "60 minutes",
-    price: "$95",
-    icon: "👶",
-  },
-  {
-    id: 5,
-    title: "Healing Ritual",
-    description: "A powerful ceremony that combines ancient practices to promote physical, emotional, and spiritual healing.",
-    duration: "75 minutes",
-    price: "$90",
-    icon: "✨",
-  },
-  {
-    id: 6,
-    title: "Meditation Guidance",
-    description: "Learn personalized meditation techniques suited to your spiritual needs and temperament.",
-    duration: "60 minutes",
-    price: "$65",
-    icon: "🧘",
-  },
-  {
-    id: 7,
-    title: "Prayer for Ancestors",
-    description: "Honor your ancestors and seek their blessings through traditional prayers and rituals.",
-    duration: "45 minutes",
-    price: "$60",
-    icon: "🕯️",
-  },
-  {
-    id: 8,
-    title: "Annual Festival Celebration",
-    description: "Join the community in celebrating major religious festivals with traditional rituals, singing, and feasting.",
-    duration: "3-4 hours",
-    price: "Donation based",
-    icon: "🎉",
-  },
-];
+type Service = {
+  id: string;
+  title: string;
+  description: string;
+  duration: string;
+  price: string;
+  icon: string;
+};
+
+const formSchema = z.object({
+  date: z.date({
+    required_error: "Please select a date for your booking.",
+  }),
+  notes: z.string().optional(),
+});
 
 const Services = () => {
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [openDialog, setOpenDialog] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      notes: "",
+    },
+  });
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('services')
+        .select('*');
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setServices(data);
+      } else {
+        // If no data from Supabase, use local mock data
+        const mockServices = [
+          {
+            id: "1",
+            title: "Spiritual Consultation",
+            description: "A one-on-one session with the priest to discuss personal spiritual concerns, receive guidance, and find clarity on life challenges.",
+            duration: "60 minutes",
+            price: "$75",
+            icon: "🙏",
+          },
+          {
+            id: "2",
+            title: "Home Blessing Ceremony",
+            description: "A sacred ritual to purify your living space, remove negative energies, and invite prosperity and harmony into your home.",
+            duration: "90 minutes",
+            price: "$120",
+            icon: "🏠",
+          },
+          {
+            id: "3",
+            title: "Marriage Ceremony",
+            description: "A beautiful, traditional ceremony to unite two souls in the sacred bond of marriage, with personalized vows and rituals.",
+            duration: "2-3 hours",
+            price: "$350",
+            icon: "💍",
+          },
+          {
+            id: "4",
+            title: "Baby Naming & Blessing",
+            description: "A joyous ceremony to welcome a new soul into the world, with name selection based on astrological considerations and blessings for a prosperous life.",
+            duration: "60 minutes",
+            price: "$95",
+            icon: "👶",
+          },
+          {
+            id: "5",
+            title: "Healing Ritual",
+            description: "A powerful ceremony that combines ancient practices to promote physical, emotional, and spiritual healing.",
+            duration: "75 minutes",
+            price: "$90",
+            icon: "✨",
+          },
+          {
+            id: "6",
+            title: "Meditation Guidance",
+            description: "Learn personalized meditation techniques suited to your spiritual needs and temperament.",
+            duration: "60 minutes",
+            price: "$65",
+            icon: "🧘",
+          },
+          {
+            id: "7",
+            title: "Prayer for Ancestors",
+            description: "Honor your ancestors and seek their blessings through traditional prayers and rituals.",
+            duration: "45 minutes",
+            price: "$60",
+            icon: "🕯️",
+          },
+          {
+            id: "8",
+            title: "Annual Festival Celebration",
+            description: "Join the community in celebrating major religious festivals with traditional rituals, singing, and feasting.",
+            duration: "3-4 hours",
+            price: "Donation based",
+            icon: "🎉",
+          },
+        ];
+        setServices(mockServices);
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch services. Please try again later.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBookNow = (service: Service) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to book a service.",
+        variant: "destructive",
+      });
+      navigate('/auth');
+      return;
+    }
+
+    setSelectedService(service);
+    setOpenDialog(true);
+  };
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!selectedService || !user) return;
+
+    try {
+      const { error } = await supabase
+        .from('service_bookings')
+        .insert({
+          service_id: selectedService.id,
+          user_id: user.id,
+          booking_date: values.date.toISOString(),
+          notes: values.notes || null,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Booking Successful",
+        description: `Your ${selectedService.title} service has been booked for ${format(values.date, 'PPPP')}. We'll contact you soon to confirm the details.`,
+      });
+
+      setOpenDialog(false);
+      form.reset();
+    } catch (error: any) {
+      console.error('Error booking service:', error);
+      toast({
+        variant: "destructive",
+        title: "Booking Failed",
+        description: error.message || "Failed to book the service. Please try again.",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -105,7 +248,12 @@ const Services = () => {
                     <span><strong>Duration:</strong> {service.duration}</span>
                     <span><strong>Offering:</strong> {service.price}</span>
                   </div>
-                  <button className="spiritual-button w-full">Book Now</button>
+                  <button 
+                    className="spiritual-button w-full"
+                    onClick={() => handleBookNow(service)}
+                  >
+                    Book Now
+                  </button>
                 </div>
               ))}
             </div>
@@ -172,6 +320,96 @@ const Services = () => {
         </div>
       </main>
       <Footer />
+
+      {/* Booking Dialog */}
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="font-sanskrit text-spiritual-brown">Book {selectedService?.title}</DialogTitle>
+            <DialogDescription>
+              Select a date for your booking and provide any additional information.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Select a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Additional Notes</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Any specific requirements or information we should know?"
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setOpenDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="bg-spiritual-gold hover:bg-spiritual-gold/90"
+                >
+                  Book Service
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
