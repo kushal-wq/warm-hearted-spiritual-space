@@ -176,8 +176,17 @@ const EventsTab = () => {
           throw new Error("Failed to update the event");
         }
       } else {
-        // Create new event
-        const newEvent = await EventsAPI.create(values);
+        // Create new event - ensure we provide all required fields
+        const newEventData = {
+          title: values.title,
+          date: values.date,
+          time: values.time,
+          location: values.location,
+          description: values.description,
+          imageUrl: values.imageUrl || "/placeholder.svg"
+        };
+        
+        const newEvent = await EventsAPI.create(newEventData);
         
         if (newEvent) {
           setEvents([...events, newEvent]);

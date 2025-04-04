@@ -28,7 +28,7 @@ const ServicesPreview = () => {
         }));
       }
       
-      // Mock data as fallback
+      // Mock data as fallback (make sure featured property is included)
       return [
         {
           id: "1",

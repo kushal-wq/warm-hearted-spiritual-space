@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -96,14 +95,19 @@ const Events = () => {
       
       // If user is logged in, check for registrations
       if (user) {
-        const registrations = await RegistrationsAPI.getByUserId(user.id);
-        const registeredEventIds = registrations.map(reg => reg.event_id);
-        
-        // Mark events as registered if the user has already registered
-        return events.map(event => ({
-          ...event,
-          isRegistered: registeredEventIds.includes(event.id)
-        }));
+        try {
+          const registrations = await RegistrationsAPI.getByUserId(user.id);
+          const registeredEventIds = registrations.map(reg => reg.event_id);
+          
+          // Mark events as registered if the user has already registered
+          return events.map(event => ({
+            ...event,
+            isRegistered: registeredEventIds.includes(event.id)
+          }));
+        } catch (error) {
+          console.error('Error fetching registrations:', error);
+          return events;
+        }
       }
       
       return events;

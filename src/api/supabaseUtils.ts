@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 
@@ -30,6 +29,7 @@ export type Event = {
   location: string;
   description: string;
   imageUrl: string;
+  isRegistered?: boolean;
   created_at: string;
   updated_at: string;
 };
