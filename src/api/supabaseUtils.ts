@@ -41,6 +41,7 @@ export type Service = {
   duration: string;
   price: string;
   icon: string;
+  featured?: boolean;
   created_at: string;
   updated_at: string;
 };
