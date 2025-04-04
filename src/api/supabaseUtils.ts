@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 
@@ -420,13 +421,15 @@ export const BookingsAPI = {
 export const ContactAPI = {
   getAll: async (): Promise<ContactSubmission[]> => {
     try {
-      const { data, error } = await supabase
+      // Use a type assertion to work around TypeScript limitations
+      // with the dynamically created table
+      const { data, error } = await (supabase as any)
         .from('contact_submissions')
         .select('*')
         .order('created_at', { ascending: false });
         
       if (error) throw error;
-      return data as unknown as ContactSubmission[] || [];
+      return data as ContactSubmission[] || [];
     } catch (error) {
       console.error('Error fetching contact submissions:', error);
       return [];
@@ -435,7 +438,8 @@ export const ContactAPI = {
   
   updateStatus: async (id: string, status: ContactSubmission['status']): Promise<boolean> => {
     try {
-      const { error } = await supabase
+      // Use a type assertion to work around TypeScript limitations
+      const { error } = await (supabase as any)
         .from('contact_submissions')
         .update({ status })
         .eq('id', id);

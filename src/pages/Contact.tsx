@@ -36,8 +36,8 @@ const Contact = () => {
 
   const onSubmit = async (values: ContactFormValues) => {
     try {
-      // Save to Supabase
-      const { error } = await supabase
+      // Save to Supabase - using type assertion to work around TypeScript limitations
+      const { error } = await (supabase as any)
         .from('contact_submissions')
         .insert({
           name: values.name,
