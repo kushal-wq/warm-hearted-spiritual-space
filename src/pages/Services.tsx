@@ -65,7 +65,6 @@ const Services = () => {
     queryFn: async () => {
       const data = await ServicesAPI.getAll();
       
-      // If no data from Supabase, use local mock data
       if (data.length === 0) {
         return [
           {
@@ -208,7 +207,6 @@ const Services = () => {
       <Navbar />
       <main className="flex-grow">
         <div className="relative py-10 bg-spiritual-cream">
-          {/* Hero Section */}
           <div className="relative mb-16">
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1470813740244-df37b8c1edcb')] bg-cover bg-center h-64 md:h-80">
               <div className="absolute inset-0 bg-gradient-to-b from-spiritual-brown/30 to-spiritual-brown/60"></div>
@@ -222,8 +220,7 @@ const Services = () => {
             </div>
           </div>
           
-          {/* Services List */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {services.map((service) => (
                 <div key={service.id} className="spiritual-card hover:shadow-lg transition-all duration-300">
@@ -246,7 +243,6 @@ const Services = () => {
               ))}
             </div>
             
-            {/* Custom Service Request */}
             <div className="mt-16 spiritual-card text-center">
               <h2 className="text-2xl font-sanskrit text-spiritual-brown mb-4">Need a Custom Service?</h2>
               <p className="text-spiritual-brown/80 mb-6 max-w-2xl mx-auto">
@@ -259,7 +255,6 @@ const Services = () => {
               </Link>
             </div>
             
-            {/* Service Process */}
             <div className="mt-16">
               <h2 className="text-2xl font-sanskrit text-spiritual-brown text-center mb-8">How It Works</h2>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -307,9 +302,8 @@ const Services = () => {
           </div>
         </div>
       </main>
-      <Footer />
+      <Footer className="w-full" />
 
-      {/* Booking Dialog */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -346,13 +340,14 @@ const Services = () => {
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className="w-auto p-0 z-50" align="start">
                         <Calendar
                           mode="single"
                           selected={field.value}
                           onSelect={field.onChange}
                           disabled={(date) => date < new Date()}
                           initialFocus
+                          className="pointer-events-auto"
                         />
                       </PopoverContent>
                     </Popover>
@@ -370,7 +365,7 @@ const Services = () => {
                     <FormControl>
                       <Textarea
                         placeholder="Any specific requirements or information we should know?"
-                        className="resize-none"
+                        className="resize-none focus:ring-2 focus:ring-spiritual-gold/30"
                         {...field}
                       />
                     </FormControl>
@@ -379,17 +374,18 @@ const Services = () => {
                 )}
               />
 
-              <DialogFooter>
+              <DialogFooter className="gap-2 sm:gap-0">
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={() => setOpenDialog(false)}
+                  className="mt-2 sm:mt-0"
                 >
                   Cancel
                 </Button>
                 <Button 
                   type="submit" 
-                  className="bg-spiritual-gold hover:bg-spiritual-gold/90"
+                  className="bg-spiritual-gold hover:bg-spiritual-gold/90 mt-2 sm:mt-0"
                 >
                   Book Service
                 </Button>

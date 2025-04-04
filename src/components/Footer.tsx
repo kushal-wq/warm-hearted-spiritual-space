@@ -3,11 +3,15 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, Mail, Phone } from 'lucide-react';
 
-const Footer = () => {
+interface FooterProps {
+  className?: string;
+}
+
+const Footer: React.FC<FooterProps> = ({ className }) => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-white/80 backdrop-blur-sm border-t border-spiritual-gold/20 pt-12 pb-6">
+    <footer className={`bg-white/80 backdrop-blur-sm border-t border-spiritual-gold/20 pt-12 pb-6 ${className || ''}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           <div className="space-y-4">

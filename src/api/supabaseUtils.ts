@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 
@@ -55,6 +54,19 @@ export type ContactSubmission = {
   message: string;
   status: 'new' | 'in-progress' | 'resolved';
   created_at: string;
+};
+
+export type Teaching = {
+  id: string;
+  title: string;
+  author: string;
+  date: string;
+  description: string;
+  category: string;
+  content: string;
+  imageUrl: string;
+  created_at: string;
+  updated_at: string;
 };
 
 // Event Operations
@@ -451,6 +463,42 @@ export const ContactAPI = {
       return false;
     }
   }
+};
+
+// Teachings Operations
+export const TeachingsAPI = {
+  getAll: async (): Promise<Teaching[]> => {
+    try {
+      // Use a type assertion to work around TypeScript limitations
+      const { data, error } = await (supabase as any)
+        .from('teachings')
+        .select('*')
+        .order('date', { ascending: false });
+        
+      if (error) throw error;
+      return data as Teaching[] || [];
+    } catch (error) {
+      console.error('Error fetching all teachings:', error);
+      return [];
+    }
+  },
+  
+  getById: async (id: string): Promise<Teaching | null> => {
+    try {
+      // Use a type assertion to work around TypeScript limitations
+      const { data, error } = await (supabase as any)
+        .from('teachings')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) throw error;
+      return data as Teaching;
+    } catch (error) {
+      console.error(`Error fetching teaching with ID ${id}:`, error);
+      return null;
+    }
+  },
 };
 
 // User's Profile Operations
