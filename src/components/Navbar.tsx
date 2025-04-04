@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { isMobile } = useIsMobile();
+  const isMobile = useIsMobile();
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -70,12 +70,12 @@ const Navbar = () => {
   ];
 
   return (
-    <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800">
+    <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center space-x-2">
-              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-spiritual-brown to-spiritual-gold font-sanskrit">
+              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-spiritual-brown to-spiritual-gold font-sanskrit transition-colors duration-300">
                 Spiritual Center
               </span>
             </Link>
@@ -87,7 +87,7 @@ const Navbar = () => {
                 <Link
                   key={item.name}
                   to={item.path}
-                  className="text-spiritual-brown hover:text-spiritual-gold px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="text-spiritual-brown hover:text-spiritual-gold dark:text-spiritual-cream dark:hover:text-spiritual-gold px-3 py-2 rounded-md text-sm font-medium transition-colors duration-300"
                 >
                   {item.name}
                 </Link>
@@ -102,7 +102,7 @@ const Navbar = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
+                    <Avatar className="h-8 w-8 ring-2 ring-spiritual-gold/30 hover:ring-spiritual-gold/60 transition-all duration-300">
                       <AvatarImage src={user.user_metadata.avatar_url} alt={user.user_metadata.full_name || ''} />
                       <AvatarFallback className="bg-spiritual-gold text-white">
                         {(user.user_metadata.full_name || user.email || '').charAt(0).toUpperCase()}
@@ -110,17 +110,17 @@ const Navbar = () => {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => navigate('/profile')}>Profile</DropdownMenuItem>
+                <DropdownMenuContent align="end" className="w-56 animate-in slide-in-from-top-1">
+                  <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer hover:bg-spiritual-cream dark:hover:bg-gray-800">Profile</DropdownMenuItem>
                   {isAdmin && (
-                    <DropdownMenuItem onClick={() => navigate('/admin')}>Admin Dashboard</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/admin')} className="cursor-pointer hover:bg-spiritual-cream dark:hover:bg-gray-800">Admin Dashboard</DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={signOut}>Sign Out</DropdownMenuItem>
+                  <DropdownMenuItem onClick={signOut} className="cursor-pointer text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30">Sign Out</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button onClick={() => navigate('/auth')} variant="default" size="sm">
+              <Button onClick={() => navigate('/auth')} variant="default" size="sm" className="bg-spiritual-gold hover:bg-spiritual-gold/90 text-white">
                 Sign In
               </Button>
             )}
@@ -130,7 +130,7 @@ const Navbar = () => {
             <ThemeToggle />
             
             <button
-              className="inline-flex items-center justify-center p-2 rounded-md text-spiritual-brown focus:outline-none focus:ring-2 focus:ring-inset focus:ring-spiritual-gold"
+              className="inline-flex items-center justify-center p-2 rounded-md text-spiritual-brown dark:text-spiritual-cream focus:outline-none focus:ring-2 focus:ring-inset focus:ring-spiritual-gold transition-colors duration-300"
               onClick={() => setIsOpen(!isOpen)}
             >
               <span className="sr-only">Open main menu</span>
@@ -152,7 +152,7 @@ const Navbar = () => {
               <Link
                 key={item.name}
                 to={item.path}
-                className="text-spiritual-brown hover:text-spiritual-gold block px-3 py-2 rounded-md text-base font-medium"
+                className="text-spiritual-brown dark:text-spiritual-cream hover:text-spiritual-gold dark:hover:text-spiritual-gold block px-3 py-2 rounded-md text-base font-medium transition-colors duration-300"
                 onClick={() => setIsOpen(false)}
               >
                 {item.name}
@@ -162,21 +162,21 @@ const Navbar = () => {
             {user ? (
               <div className="border-t border-spiritual-brown/10 dark:border-gray-700 mt-4 pt-4">
                 <div className="flex items-center px-3">
-                  <Avatar className="h-10 w-10 mr-3">
+                  <Avatar className="h-10 w-10 mr-3 ring-2 ring-spiritual-gold/30">
                     <AvatarImage src={user.user_metadata.avatar_url} alt={user.user_metadata.full_name || ''} />
                     <AvatarFallback className="bg-spiritual-gold text-white">
                       {(user.user_metadata.full_name || user.email || '').charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-medium text-spiritual-brown">{user.user_metadata.full_name || user.email}</p>
-                    <p className="text-xs text-spiritual-brown/70">{user.email}</p>
+                    <p className="text-sm font-medium text-spiritual-brown dark:text-spiritual-cream">{user.user_metadata.full_name || user.email}</p>
+                    <p className="text-xs text-spiritual-brown/70 dark:text-spiritual-cream/70">{user.email}</p>
                   </div>
                 </div>
                 
                 <Link
                   to="/profile"
-                  className="text-spiritual-brown hover:text-spiritual-gold block px-3 py-2 rounded-md text-base font-medium mt-2"
+                  className="text-spiritual-brown dark:text-spiritual-cream hover:text-spiritual-gold dark:hover:text-spiritual-gold block px-3 py-2 rounded-md text-base font-medium mt-2 transition-colors duration-300"
                   onClick={() => setIsOpen(false)}
                 >
                   Profile
@@ -185,7 +185,7 @@ const Navbar = () => {
                 {isAdmin && (
                   <Link
                     to="/admin"
-                    className="text-spiritual-brown hover:text-spiritual-gold block px-3 py-2 rounded-md text-base font-medium"
+                    className="text-spiritual-brown dark:text-spiritual-cream hover:text-spiritual-gold dark:hover:text-spiritual-gold block px-3 py-2 rounded-md text-base font-medium transition-colors duration-300"
                     onClick={() => setIsOpen(false)}
                   >
                     Admin Dashboard
@@ -197,7 +197,7 @@ const Navbar = () => {
                     signOut();
                     setIsOpen(false);
                   }}
-                  className="text-spiritual-brown hover:text-spiritual-gold block w-full text-left px-3 py-2 rounded-md text-base font-medium"
+                  className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors duration-300"
                 >
                   Sign Out
                 </button>
@@ -209,7 +209,7 @@ const Navbar = () => {
                     navigate('/auth');
                     setIsOpen(false);
                   }} 
-                  className="w-full"
+                  className="w-full bg-spiritual-gold hover:bg-spiritual-gold/90 text-white"
                 >
                   Sign In
                 </Button>
