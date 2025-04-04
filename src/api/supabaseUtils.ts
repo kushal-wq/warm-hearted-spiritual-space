@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 
@@ -499,6 +500,79 @@ export const TeachingsAPI = {
       return null;
     }
   },
+  
+  create: async (teaching: Omit<Teaching, 'id' | 'created_at' | 'updated_at'>): Promise<Teaching | null> => {
+    try {
+      // Map from our Teaching type to the database column names
+      const dbTeaching: any = { ...teaching };
+      if (teaching.imageUrl) {
+        dbTeaching.imageurl = teaching.imageUrl;
+        delete dbTeaching.imageUrl;
+      }
+      
+      const { data, error } = await (supabase as any)
+        .from('teachings')
+        .insert(dbTeaching)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      // Map the returned data back to our Teaching type
+      return {
+        id: data.id,
+        title: data.title,
+        author: data.author,
+        date: data.date,
+        description: data.description,
+        category: data.category,
+        content: data.content,
+        imageUrl: data.imageurl || '/placeholder.svg',
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      };
+    } catch (error) {
+      console.error('Error creating teaching:', error);
+      return null;
+    }
+  },
+  
+  update: async (id: string, teaching: Partial<Teaching>): Promise<boolean> => {
+    try {
+      // Map from our Teaching type to the database column names
+      const dbTeaching: any = { ...teaching };
+      if (teaching.imageUrl) {
+        dbTeaching.imageurl = teaching.imageUrl;
+        delete dbTeaching.imageUrl;
+      }
+      
+      const { error } = await (supabase as any)
+        .from('teachings')
+        .update(dbTeaching)
+        .eq('id', id);
+        
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error(`Error updating teaching with ID ${id}:`, error);
+      return false;
+    }
+  },
+  
+  delete: async (id: string): Promise<boolean> => {
+    try {
+      const { error } = await (supabase as any)
+        .from('teachings')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error(`Error deleting teaching with ID ${id}:`, error);
+      return false;
+    }
+  }
 };
 
 // User's Profile Operations
