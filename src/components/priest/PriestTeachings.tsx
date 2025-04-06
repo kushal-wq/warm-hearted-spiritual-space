@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Search, BookOpen, FileText, Download, Filter, CheckCircle } from 'lucide-react';
+import { Search, BookOpen, FileText, Download, Filter, CheckCircle, Share2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -78,7 +78,7 @@ const teachingsData = [
 ];
 
 // Level badges
-const levelBadges: Record<string, string> = {
+const levelBadges = {
   'Beginner': 'bg-green-100 text-green-800',
   'Intermediate': 'bg-amber-100 text-amber-800',
   'Advanced': 'bg-violet-100 text-violet-800',
@@ -87,7 +87,7 @@ const levelBadges: Record<string, string> = {
 
 const PriestTeachings = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   
   const filteredTeachings = teachingsData.filter(teaching => {
     const matchesSearch = teaching.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
