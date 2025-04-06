@@ -77,9 +77,9 @@ const AdminDashboard = () => {
           el.style.boxShadow = '0 0 0 3px white';
           el.style.cursor = 'pointer';
           
-          // Add marker to the map
+          // Add marker to the map - Fix TypeScript error by using a tuple for coordinates
           new mapboxgl.Marker(el)
-            .setLngLat(location.coordinates)
+            .setLngLat(location.coordinates as [number, number])
             .setPopup(new mapboxgl.Popup({ offset: 25 })
             .setHTML(`<p class="font-medium">${location.name}</p>`))
             .addTo(map);
