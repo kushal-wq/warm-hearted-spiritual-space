@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Edit, Plus, Trash2, Loader2 } from 'lucide-react';
+import { Calendar, Edit, Plus, Trash2, Loader2, MapPin, Clock, IndianRupee } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { EventsAPI } from '@/api/supabaseUtils';
 import {
@@ -34,6 +35,7 @@ type Event = {
   location: string;
   description: string;
   imageUrl?: string;
+  price?: number;
 };
 
 const formSchema = z.object({
@@ -53,7 +55,26 @@ const formSchema = z.object({
     message: "Description must be at least 10 characters.",
   }),
   imageUrl: z.string().optional(),
+  price: z.coerce.number().min(0, {
+    message: "Price must be a positive number or zero.",
+  }).optional(),
 });
+
+// Indian event images mapping
+const eventImages = [
+  "https://images.unsplash.com/photo-1512236258305-32fb4f4503de?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1651047453641-306a42525d65?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1567934150921-7632371abb32?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1504805572947-34fad45aed93?q=80&w=1000&auto=format&fit=crop"
+];
+
+// Indian Rupee formatter
+const formatToRupees = (amount: number | undefined) => {
+  if (amount === undefined) return '';
+  return `₹${amount.toLocaleString('en-IN')}`;
+};
 
 const EventsTab = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -72,7 +93,8 @@ const EventsTab = () => {
       time: "",
       location: "",
       description: "",
-      imageUrl: "/placeholder.svg",
+      imageUrl: "",
+      price: 0,
     },
   });
 
@@ -88,16 +110,18 @@ const EventsTab = () => {
         time: editingEvent.time,
         location: editingEvent.location,
         description: editingEvent.description,
-        imageUrl: editingEvent.imageUrl || "/placeholder.svg",
+        imageUrl: editingEvent.imageUrl || "",
+        price: editingEvent.price || 0,
       });
     } else {
       form.reset({
         title: "",
-        date: "",
+        date: new Date().toISOString().split('T')[0],
         time: "",
         location: "",
         description: "",
-        imageUrl: "/placeholder.svg",
+        imageUrl: "",
+        price: 0,
       });
     }
   }, [editingEvent, form]);
@@ -106,7 +130,19 @@ const EventsTab = () => {
     try {
       setIsLoading(true);
       const data = await EventsAPI.getAll();
-      setEvents(data);
+      
+      // Add default images to events without images
+      const eventsWithImages = data.map((event, index) => {
+        if (!event.imageUrl || event.imageUrl === "/placeholder.svg") {
+          return {
+            ...event,
+            imageUrl: eventImages[index % eventImages.length]
+          };
+        }
+        return event;
+      });
+      
+      setEvents(eventsWithImages);
     } catch (error) {
       console.error('Error fetching events:', error);
       toast({
@@ -159,6 +195,12 @@ const EventsTab = () => {
     try {
       setIsSubmitting(true);
       
+      // If no image URL is provided, assign one from our collection
+      if (!values.imageUrl || values.imageUrl.trim() === '') {
+        const randomIndex = Math.floor(Math.random() * eventImages.length);
+        values.imageUrl = eventImages[randomIndex];
+      }
+      
       if (editingEvent) {
         // Update existing event
         const success = await EventsAPI.update(editingEvent.id, values);
@@ -183,7 +225,8 @@ const EventsTab = () => {
           time: values.time,
           location: values.location,
           description: values.description,
-          imageUrl: values.imageUrl || "/placeholder.svg"
+          imageUrl: values.imageUrl,
+          price: values.price
         };
         
         const newEvent = await EventsAPI.create(newEventData);
@@ -242,40 +285,66 @@ const EventsTab = () => {
         ) : (
           <div className="space-y-4">
             {events.map((event) => (
-              <Card key={event.id} className="bg-white/50">
-                <CardContent className="flex justify-between items-center p-4">
-                  <div className="flex items-center">
-                    <div className="bg-spiritual-sand/30 p-2 rounded-lg mr-4 w-12 h-12 flex items-center justify-center">
-                      <Calendar className="h-6 w-6 text-spiritual-brown" />
+              <Card key={event.id} className="bg-white/50 overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    {/* Event Image */}
+                    <div className="w-full sm:w-24 h-24 bg-spiritual-sand/30 rounded-md overflow-hidden">
+                      <img 
+                        src={event.imageUrl} 
+                        alt={event.title}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    <div>
-                      <p className="font-medium text-spiritual-brown">{event.title}</p>
-                      <p className="text-sm text-spiritual-brown/70">{event.date} • {event.time}</p>
+                    
+                    {/* Event Details */}
+                    <div className="flex-1">
+                      <h3 className="font-medium text-spiritual-brown text-lg mb-1">{event.title}</h3>
+                      <div className="flex flex-wrap gap-x-4 text-sm text-spiritual-brown/70">
+                        <span className="flex items-center">
+                          <Calendar className="h-3 w-3 mr-1" /> {event.date}
+                        </span>
+                        <span className="flex items-center">
+                          <Clock className="h-3 w-3 mr-1" /> {event.time}
+                        </span>
+                        <span className="flex items-center">
+                          <MapPin className="h-3 w-3 mr-1" /> {event.location}
+                        </span>
+                        {event.price !== undefined && (
+                          <span className="flex items-center font-medium text-spiritual-brown">
+                            <IndianRupee className="h-3 w-3 mr-1" /> {formatToRupees(event.price)}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-2 text-sm text-spiritual-brown/80 line-clamp-2">{event.description}</p>
                     </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleEditEvent(event)}
-                    >
-                      <Edit className="h-4 w-4 mr-2" /> Edit
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="text-destructive"
-                      onClick={() => handleDeleteEvent(event.id)}
-                      disabled={isDeleting === event.id}
-                    >
-                      {isDeleting === event.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          <Trash2 className="h-4 w-4 mr-2" /> Delete
-                        </>
-                      )}
-                    </Button>
+                    
+                    {/* Actions */}
+                    <div className="flex flex-row sm:flex-col justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleEditEvent(event)}
+                        className="w-full"
+                      >
+                        <Edit className="h-4 w-4 mr-2" /> Edit
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-destructive w-full"
+                        onClick={() => handleDeleteEvent(event.id)}
+                        disabled={isDeleting === event.id}
+                      >
+                        {isDeleting === event.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Trash2 className="h-4 w-4 mr-2" /> Delete
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -350,7 +419,42 @@ const EventsTab = () => {
                     <FormItem className="col-span-2">
                       <FormLabel>Location</FormLabel>
                       <FormControl>
-                        <Input placeholder="Riverside Sanctuary, 456 Harmony Ave" {...field} />
+                        <Input placeholder="Riverside Sanctuary, Rishikesh" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price (₹)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number"
+                          placeholder="500"
+                          min="0"
+                          step="50"
+                          {...field}
+                          onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value, 10))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Image URL (optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Leave blank for default image" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -369,20 +473,6 @@ const EventsTab = () => {
                           className="resize-none min-h-[100px]"
                           {...field} 
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="imageUrl"
-                  render={({ field }) => (
-                    <FormItem className="col-span-2">
-                      <FormLabel>Image URL (optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="/placeholder.svg" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

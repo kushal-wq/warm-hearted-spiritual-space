@@ -1,14 +1,30 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin } from 'lucide-react';
+import { Calendar, Clock, MapPin, Indian } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { EventsAPI, RegistrationsAPI, Event } from '@/api/supabaseUtils';
+
+// Indian Rupee formatter
+const formatToRupees = (amount: number) => {
+  return `₹${amount.toLocaleString('en-IN')}`;
+};
+
+// Event images mapping
+const eventImages = [
+  "https://images.unsplash.com/photo-1512236258305-32fb4f4503de?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1651047453641-306a42525d65?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1567934150921-7632371abb32?q=80&w=1000&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1504805572947-34fad45aed93?q=80&w=1000&auto=format&fit=crop"
+];
 
 const Events = () => {
   const { toast } = useToast();
@@ -29,9 +45,10 @@ const Events = () => {
             title: "New Moon Meditation Circle",
             date: "2023-11-15",
             time: "7:00 PM - 9:00 PM",
-            location: "Divine Temple Garden, 123 Peace St",
+            location: "Divine Temple Garden, Varanasi",
             description: "Join us for a powerful group meditation during the new moon to set intentions and connect with divine energy.",
-            imageUrl: "/placeholder.svg",
+            imageUrl: eventImages[0],
+            price: 500,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           },
@@ -40,9 +57,10 @@ const Events = () => {
             title: "Sacred Fire Ceremony",
             date: "2023-11-21",
             time: "5:30 AM - 7:00 AM",
-            location: "Riverside Sanctuary, 456 Harmony Ave",
+            location: "Riverside Sanctuary, Rishikesh",
             description: "A traditional fire ceremony (havan) to purify the atmosphere and invoke divine blessings.",
-            imageUrl: "/placeholder.svg",
+            imageUrl: eventImages[1],
+            price: 750,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           },
@@ -51,9 +69,10 @@ const Events = () => {
             title: "Bhagavad Gita Study Group",
             date: "2023-11-28",
             time: "6:30 PM - 8:30 PM",
-            location: "Wisdom Center, 789 Enlightenment Blvd",
+            location: "Wisdom Center, Delhi",
             description: "Weekly gathering to study and discuss the profound teachings of the Bhagavad Gita.",
-            imageUrl: "/placeholder.svg",
+            imageUrl: eventImages[2],
+            price: 300,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           },
@@ -62,9 +81,10 @@ const Events = () => {
             title: "Full Moon Sound Healing",
             date: "2023-11-30",
             time: "8:00 PM - 9:30 PM",
-            location: "Crystal Dome, 321 Serenity Way",
+            location: "Crystal Dome, Goa",
             description: "Experience the healing vibrations of crystal bowls, gongs, and mantras during the full moon.",
-            imageUrl: "/placeholder.svg",
+            imageUrl: eventImages[3],
+            price: 1200,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           },
@@ -73,9 +93,10 @@ const Events = () => {
             title: "Spiritual Retreat Weekend",
             date: "2023-12-09",
             time: "Friday 4:00 PM - Sunday 2:00 PM",
-            location: "Mountain Ashram, 555 Elevation Ridge",
+            location: "Mountain Ashram, Himalayas",
             description: "An immersive weekend of meditation, yoga, silence, and spiritual teachings to deepen your practice.",
-            imageUrl: "/placeholder.svg",
+            imageUrl: eventImages[4],
+            price: 15000,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           },
@@ -84,14 +105,22 @@ const Events = () => {
             title: "Winter Solstice Celebration",
             date: "2023-12-21",
             time: "7:00 PM - 10:00 PM",
-            location: "Community Temple, 888 Light Path",
+            location: "Community Temple, Mumbai",
             description: "Celebrate the return of the light with sacred rituals, music, and community gathering.",
-            imageUrl: "/placeholder.svg",
+            imageUrl: eventImages[5],
+            price: 800,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }
         ];
       }
+      
+      // Add images to events if they don't have one
+      events.forEach((event, index) => {
+        if (!event.imageUrl || event.imageUrl === "/placeholder.svg") {
+          event.imageUrl = eventImages[index % eventImages.length];
+        }
+      });
       
       // If user is logged in, check for registrations
       if (user) {
@@ -214,6 +243,11 @@ const Events = () => {
                       <Calendar className="h-3 w-3 mr-1" />
                       {new Date(event.date).toLocaleDateString()}
                     </div>
+                    {event.price && (
+                      <div className="absolute bottom-2 left-2 bg-spiritual-brown/80 text-white text-sm px-2 py-1 rounded">
+                        {formatToRupees(event.price)}
+                      </div>
+                    )}
                   </div>
                   
                   <CardHeader>
@@ -242,7 +276,7 @@ const Events = () => {
                         ? 'Processing...' 
                         : event.isRegistered 
                           ? 'Cancel Registration' 
-                          : 'Register for Event'}
+                          : `Register for ${formatToRupees(event.price || 0)}`}
                     </Button>
                   </CardFooter>
                 </Card>

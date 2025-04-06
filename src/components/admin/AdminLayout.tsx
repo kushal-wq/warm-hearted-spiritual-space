@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Settings, ChevronLeft, LayoutDashboard, Users, Calendar, BookOpen, Mail, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -13,6 +14,8 @@ interface AdminLayoutProps {
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
   // Get current section from pathname
   const getCurrentSection = () => {
@@ -27,6 +30,16 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   };
   
   const currentSection = getCurrentSection();
+  
+  const handleQuickNavigation = (section: string) => {
+    if (section === 'users') {
+      navigate('/admin#users');
+    } else if (section === 'events') {
+      navigate('/admin#events');
+    } else if (section === 'teachings') {
+      navigate('/admin#teachings');
+    }
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -46,11 +59,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <Breadcrumb>
                   <BreadcrumbList>
                     <BreadcrumbItem>
-                      <BreadcrumbLink href="/">Home</BreadcrumbLink>
+                      <BreadcrumbLink asChild><Link to="/">Home</Link></BreadcrumbLink>
                     </BreadcrumbItem>
                     <BreadcrumbSeparator />
                     <BreadcrumbItem>
-                      <BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
+                      <BreadcrumbLink asChild><Link to="/admin">Admin</Link></BreadcrumbLink>
                     </BreadcrumbItem>
                     {currentSection && (
                       <>
@@ -68,7 +81,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <div className="flex items-center mt-1">
                   <LayoutDashboard className="h-4 w-4 text-spiritual-brown/70 dark:text-spiritual-cream/70 mr-1" />
                   <p className="text-spiritual-brown/70 dark:text-spiritual-cream/70">
-                    Manage your spiritual center's content and users
+                    Manage your spiritual center's content and users in India
                   </p>
                 </div>
               </div>
@@ -76,18 +89,39 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             
             {/* Quick Actions */}
             <div className="mt-4 md:mt-0 flex flex-wrap gap-3">
-              <Button className="bg-spiritual-gold hover:bg-spiritual-gold/90 transition-all shadow-md hover:shadow-lg text-white">
+              <Button 
+                className="bg-spiritual-gold hover:bg-spiritual-gold/90 transition-all shadow-md hover:shadow-lg text-white"
+                onClick={() => setIsSettingsOpen(true)}
+              >
                 <Settings className="h-4 w-4 mr-2" /> Settings
               </Button>
               
               <div className="flex space-x-2">
-                <Button variant="outline" size="icon" className="rounded-full" title="Manage Users">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="rounded-full" 
+                  title="Manage Users"
+                  onClick={() => handleQuickNavigation('users')}
+                >
                   <Users className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon" className="rounded-full" title="Manage Events">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="rounded-full" 
+                  title="Manage Events"
+                  onClick={() => handleQuickNavigation('events')}
+                >
                   <Calendar className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon" className="rounded-full" title="Manage Teachings">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="rounded-full" 
+                  title="Manage Teachings"
+                  onClick={() => handleQuickNavigation('teachings')}
+                >
                   <BookOpen className="h-4 w-4" />
                 </Button>
               </div>
@@ -101,6 +135,80 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       </main>
       
       <Footer />
+
+      {/* Settings Sheet */}
+      <Sheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Admin Settings</SheetTitle>
+            <SheetDescription>
+              Configure your admin dashboard preferences
+            </SheetDescription>
+          </SheetHeader>
+          <div className="py-6">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium">Regional Settings</h3>
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium" htmlFor="currency">
+                      Currency
+                    </label>
+                    <select 
+                      id="currency" 
+                      className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                      defaultValue="INR"
+                      disabled
+                    >
+                      <option value="INR">Indian Rupee (₹)</option>
+                      <option value="USD">US Dollar ($)</option>
+                      <option value="EUR">Euro (€)</option>
+                    </select>
+                    <p className="text-xs text-spiritual-brown/60 mt-1">
+                      All monetary values will be displayed in Indian Rupees (₹)
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium" htmlFor="region">
+                      Default Region
+                    </label>
+                    <select 
+                      id="region" 
+                      className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+                      defaultValue="India"
+                      disabled
+                    >
+                      <option value="India">India</option>
+                      <option value="Global">Global</option>
+                    </select>
+                    <p className="text-xs text-spiritual-brown/60 mt-1">
+                      Maps and geographic data will default to India
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-medium">Dashboard Appearance</h3>
+                <div className="mt-4 space-y-4">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="realTimeUpdates"
+                      className="rounded border-gray-300"
+                      defaultChecked
+                    />
+                    <label htmlFor="realTimeUpdates" className="ml-2 block text-sm">
+                      Enable real-time updates
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };

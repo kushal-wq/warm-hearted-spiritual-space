@@ -33,9 +33,8 @@ const Index = () => {
         const sectionElement = section as HTMLElement;
         // Use requestAnimationFrame for smoother animations
         requestAnimationFrame(() => {
-          // Different scroll speeds for different sections creates parallax effect
-          // Reduced the effect slightly for better visual appearance
-          const speed = index % 2 === 0 ? 0.02 : -0.02;
+          // Reduced the effect for better visual appearance and to avoid footer issues
+          const speed = index % 2 === 0 ? 0.01 : -0.01;
           sectionElement.style.transform = `translateY(${scrollY * speed}px)`;
         });
       });
@@ -67,10 +66,10 @@ const Index = () => {
             <DonatePreview />
           </section>
           
-          {/* Added spacer to ensure footer visibility */}
-          <div className="h-12"></div>
+          {/* Increased spacer to ensure footer visibility */}
+          <div className="h-24"></div>
         </main>
-        <Footer />
+        <Footer className="relative z-20" />
       </div>
     </QueryClientProvider>
   );

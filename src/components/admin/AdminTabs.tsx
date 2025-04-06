@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Mail, Calendar, BookOpen, Gift } from 'lucide-react';
 import UsersTab from '@/components/admin/tabs/UsersTab';
@@ -7,12 +7,28 @@ import ContactTab from '@/components/admin/tabs/ContactTab';
 import EventsTab from '@/components/admin/tabs/EventsTab';
 import TeachingsTab from '@/components/admin/tabs/TeachingsTab';
 import DonationsTab from '@/components/admin/tabs/DonationsTab';
+import { useLocation } from 'react-router-dom';
 
 const AdminTabs = () => {
   const [activeTab, setActiveTab] = useState('users');
+  const location = useLocation();
+  
+  // Set active tab based on URL hash if present
+  useEffect(() => {
+    const hash = location.hash.replace('#', '');
+    if (hash && ['users', 'contact', 'events', 'teachings', 'donations'].includes(hash)) {
+      setActiveTab(hash);
+    }
+  }, [location]);
+  
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    // Update URL hash for better navigation
+    window.history.replaceState(null, '', `#${value}`);
+  };
 
   return (
-    <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
       <TabsList className="mb-6 flex flex-wrap justify-start gap-1 bg-spiritual-cream/10 dark:bg-gray-800/50 p-1 rounded-lg overflow-x-auto">
         <TabsTrigger 
           value="users" 
