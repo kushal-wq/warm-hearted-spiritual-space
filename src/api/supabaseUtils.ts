@@ -30,6 +30,7 @@ export type Event = {
   location: string;
   description: string;
   imageUrl: string;
+  price?: number;  // Added price property
   isRegistered?: boolean;
   created_at: string;
   updated_at: string;
