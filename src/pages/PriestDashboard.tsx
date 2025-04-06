@@ -3,13 +3,15 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Calendar, Clock, Book, Settings, Calendar as CalendarIcon, Users, BookOpen } from 'lucide-react';
+import { Loader2, Calendar, Clock, Book, Settings, Calendar as CalendarIcon, Users, BookOpen, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import PriestLayout from '@/components/priest/PriestLayout';
 import PriestSchedule from '@/components/priest/PriestSchedule';
 import PriestRituals from '@/components/priest/PriestRituals';
 import PriestTeachings from '@/components/priest/PriestTeachings';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Steps } from '@/components/ui/steps';
 
 // Sample schedule data
 const upcomingEvents = [
@@ -41,6 +43,7 @@ const PriestDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'schedule' | 'rituals' | 'teachings'>('schedule');
+  const [showAccessInstructions, setShowAccessInstructions] = useState(false);
   
   // In a real app, you would check if the user is a priest
   const isPriest = true; // This would come from user profile or a separate check
@@ -62,6 +65,13 @@ const PriestDashboard = () => {
         title: "Welcome to Priest Dashboard",
         description: "Manage your rituals, teachings, and schedule.",
       });
+      
+      // Show access instructions on first visit (you could use localStorage to track this)
+      const firstVisit = localStorage.getItem('priest_dashboard_visited') === null;
+      if (firstVisit) {
+        setShowAccessInstructions(true);
+        localStorage.setItem('priest_dashboard_visited', 'true');
+      }
     }
   }, [user, toast]);
   
@@ -87,6 +97,33 @@ const PriestDashboard = () => {
   return (
     <PriestLayout>
       <div className="space-y-8 animate-fade-in">
+        {showAccessInstructions && (
+          <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800/30">
+            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+            <AlertTitle className="text-amber-800 dark:text-amber-400">Accessing the Priest Dashboard</AlertTitle>
+            <AlertDescription className="text-amber-700 dark:text-amber-300 mt-2">
+              <p className="mb-4">To access the Priest Dashboard, follow these steps:</p>
+              
+              <ol className="list-decimal pl-5 space-y-2">
+                <li>Sign in with your priest account credentials or Google authentication</li>
+                <li>Navigate to the Priest Dashboard from the user dropdown in the top right</li>
+                <li>Request admin approval if this is your first time accessing priestly functions</li>
+                <li>Explore the schedule, rituals, and teachings sections using the tabs below</li>
+              </ol>
+              
+              <div className="mt-5 flex justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowAccessInstructions(false)}
+                  className="text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700"
+                >
+                  Got it
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+      
         {/* Priest dashboard overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>

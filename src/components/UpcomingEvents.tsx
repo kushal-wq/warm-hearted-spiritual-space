@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Clock, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { EventsAPI, Event } from '@/api/supabaseUtils';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 const UpcomingEvents = () => {
   const { data: events = [] } = useQuery<Event[]>({
@@ -24,7 +25,7 @@ const UpcomingEvents = () => {
           time: "6:00 PM - 9:00 PM",
           location: "Temple Gardens, Delhi",
           description: "Join us for nine nights of devotion, music, and dance honoring the divine feminine energy.",
-          imageUrl: "/placeholder.svg",
+          imageUrl: "/event-navratri.jpg",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         },
@@ -35,7 +36,7 @@ const UpcomingEvents = () => {
           time: "All Day",
           location: "Rishikesh Sanctuary",
           description: "A weekend of deep meditation, yoga practices, and spiritual teachings by the sacred Ganges.",
-          imageUrl: "/placeholder.svg",
+          imageUrl: "/event-meditation.jpg",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         },
@@ -46,7 +47,7 @@ const UpcomingEvents = () => {
           time: "6:30 PM - 8:00 PM",
           location: "Community Hall, Mumbai",
           description: "An enlightening talk on finding purpose and meaning through the timeless wisdom of the Gita.",
-          imageUrl: "/placeholder.svg",
+          imageUrl: "/event-discourse.jpg",
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         },
@@ -69,6 +70,14 @@ const UpcomingEvents = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {events.map((event) => (
           <div key={event.id} className="indian-card p-6 hover:shadow-lg transition-all duration-300 card-3d">
+            <AspectRatio ratio={16/9} className="mb-4 overflow-hidden rounded-lg">
+              <img 
+                src={event.imageUrl || "/placeholder.svg"} 
+                alt={event.title}
+                className="object-cover w-full h-full hover:scale-105 transition-transform duration-500" 
+              />
+            </AspectRatio>
+            
             <div className="flex items-start mb-4">
               <div className="bg-spiritual-saffron/10 p-3 rounded-lg mr-4">
                 <Calendar className="h-6 w-6 text-spiritual-saffron" />
