@@ -6,19 +6,13 @@ import AdminDashboardStats from '@/components/admin/AdminDashboardStats';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminTabs from '@/components/admin/AdminTabs';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
-
-// Temporary mapbox token - in production this should be loaded from environment variables
-mapboxgl.accessToken = 'pk.eyJ1IjoibG92YWJsZXRlc3QiLCJhIjoiY2xwMndtNnExMHVncDJpbXVpc2U1MXlsdSJ9.zXoDA7rQQgr5WgsoXuJWAg';
 
 const AdminDashboard = () => {
   const { user, isAdmin, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [mapInitialized, setMapInitialized] = useState(false);
 
   useEffect(() => {
     if (!isLoading && (!user || !isAdmin)) {
@@ -39,62 +33,6 @@ const AdminDashboard = () => {
       });
     }
   }, [user, isAdmin, toast]);
-
-  useEffect(() => {
-    if (user && isAdmin && !mapInitialized && !isLoading) {
-      // Initialize India-focused map
-      const mapContainer = document.getElementById('admin-map-container');
-      if (!mapContainer) return;
-      
-      try {
-        const map = new mapboxgl.Map({
-          container: 'admin-map-container',
-          style: 'mapbox://styles/mapbox/streets-v12',
-          center: [78.9629, 20.5937], // India center coordinates
-          zoom: 4
-        });
-        
-        // Add navigation controls
-        map.addControl(new mapboxgl.NavigationControl());
-        
-        // Add marker for example locations in India
-        const locations = [
-          { name: "Delhi Center", coordinates: [77.2090, 28.6139], color: "#E27D60" },
-          { name: "Mumbai Center", coordinates: [72.8777, 19.0760], color: "#85CDCA" },
-          { name: "Bangalore Center", coordinates: [77.5946, 12.9716], color: "#E8A87C" },
-          { name: "Varanasi Center", coordinates: [83.0059, 25.3176], color: "#C38D9E" },
-          { name: "Rishikesh Center", coordinates: [78.2676, 30.0869], color: "#41B3A3" }
-        ];
-        
-        locations.forEach(location => {
-          // Create a DOM element for the marker
-          const el = document.createElement('div');
-          el.className = 'location-marker';
-          el.style.backgroundColor = location.color;
-          el.style.width = '20px';
-          el.style.height = '20px';
-          el.style.borderRadius = '50%';
-          el.style.boxShadow = '0 0 0 3px white';
-          el.style.cursor = 'pointer';
-          
-          // Add marker to the map - Fix TypeScript error by using a tuple for coordinates
-          new mapboxgl.Marker(el)
-            .setLngLat(location.coordinates as [number, number])
-            .setPopup(new mapboxgl.Popup({ offset: 25 })
-            .setHTML(`<p class="font-medium">${location.name}</p>`))
-            .addTo(map);
-        });
-        
-        setMapInitialized(true);
-      } catch (error) {
-        console.error('Error initializing map:', error);
-      }
-    }
-    
-    return () => {
-      // Cleanup map instance if needed
-    };
-  }, [user, isAdmin, isLoading, mapInitialized]);
 
   // Improved loading state with animation
   if (isLoading) {
@@ -120,16 +58,44 @@ const AdminDashboard = () => {
       <div className="space-y-8 animate-fade-in">
         <AdminDashboardStats />
         
-        {/* India Map */}
+        {/* India Center Locations Map Alternative */}
         <Card>
           <CardHeader>
             <CardTitle>Program Locations in India</CardTitle>
           </CardHeader>
           <CardContent>
-            <div 
-              id="admin-map-container" 
-              className="w-full h-[400px] rounded-md overflow-hidden border border-gray-200"
-            />
+            <div className="w-full h-[400px] rounded-md overflow-hidden border border-gray-200 bg-amber-50/50 p-4">
+              <h3 className="font-medium text-xl mb-6 text-center text-spiritual-brown">Our Spiritual Centers Across India</h3>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {[
+                  { name: "Delhi Center", location: "Gandhi Nagar, Delhi", color: "#E27D60" },
+                  { name: "Mumbai Center", location: "Juhu Beach Area, Mumbai", color: "#85CDCA" },
+                  { name: "Bangalore Center", location: "Indiranagar, Bangalore", color: "#E8A87C" },
+                  { name: "Varanasi Center", location: "Dashashwamedh Ghat, Varanasi", color: "#C38D9E" },
+                  { name: "Rishikesh Center", location: "Tapovan, Rishikesh", color: "#41B3A3" }
+                ].map((center, index) => (
+                  <div 
+                    key={index}
+                    className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center text-center hover:shadow-lg transition-shadow"
+                    style={{ borderTop: `4px solid ${center.color}` }}
+                  >
+                    <div 
+                      className="w-10 h-10 rounded-full mb-2 flex items-center justify-center" 
+                      style={{ backgroundColor: center.color }}
+                    >
+                      <MapPin className="h-5 w-5 text-white" />
+                    </div>
+                    <h4 className="font-medium text-spiritual-brown">{center.name}</h4>
+                    <p className="text-sm text-spiritual-brown/70">{center.location}</p>
+                  </div>
+                ))}
+              </div>
+              
+              <p className="text-center mt-6 text-sm text-spiritual-brown/60">
+                Visit any of our centers for spiritual guidance and community events
+              </p>
+            </div>
           </CardContent>
         </Card>
         

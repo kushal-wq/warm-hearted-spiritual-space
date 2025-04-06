@@ -87,7 +87,7 @@ const Contact = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-spiritual-brown/80 mb-2">Our spiritual advisors are available</p>
-                <p className="text-spiritual-brown font-medium">+1 (555) 123-4567</p>
+                <p className="text-spiritual-brown font-medium">+91 9876 543210</p>
                 <p className="text-sm text-spiritual-brown/70 mt-2">Monday-Saturday: 9am-5pm</p>
               </CardContent>
             </Card>
@@ -115,7 +115,7 @@ const Contact = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-spiritual-brown/80 mb-2">Our spiritual center is located at</p>
-                <p className="text-spiritual-brown font-medium">123 Serenity Lane, Harmony Hills, CA 90210</p>
+                <p className="text-spiritual-brown font-medium">123 Krishna Nagar, Near Ganges River, Haridwar, Uttarakhand, India</p>
                 <p className="text-sm text-spiritual-brown/70 mt-2">Open daily for visitors: 7am-7pm</p>
               </CardContent>
             </Card>
@@ -209,7 +209,7 @@ const Contact = () => {
               <Card className="h-full border-spiritual-gold/20 shadow-lg overflow-hidden">
                 <div className="h-full">
                   <iframe 
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d423286.27404345275!2d-118.69191089226126!3d34.02016130653093!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80c2c75ddc27da13%3A0xe22fdf6f254608f4!2sLos%20Angeles%2C%20CA%2C%20USA!5e0!3m2!1sen!2sca!4v1666559109266!5m2!1sen!2sca" 
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3456.219969455281!2d78.1365343146789!3d29.978092381907656!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39094370858f4965%3A0xe29da674b2af7cf1!2sHaridwar%2C%20Uttarakhand%2C%20India!5e0!3m2!1sen!2sin!4v1614201896951!5m2!1sen!2sin" 
                     width="100%" 
                     height="100%" 
                     style={{ border: 0, minHeight: "400px" }} 

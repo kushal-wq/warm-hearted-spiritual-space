@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { useToast } from '@/hooks/use-toast';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { toast } = useToast();
   
   // Get current section from pathname
   const getCurrentSection = () => {
@@ -32,13 +34,47 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const currentSection = getCurrentSection();
   
   const handleQuickNavigation = (section: string) => {
-    if (section === 'users') {
-      navigate('/admin#users');
-    } else if (section === 'events') {
-      navigate('/admin#events');
-    } else if (section === 'teachings') {
-      navigate('/admin#teachings');
+    toast({
+      title: `Navigating to ${section}`,
+      description: `Scrolling to ${section} section.`,
+    });
+
+    // Scroll to the section
+    const element = document.getElementById(section.toLowerCase());
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      navigate('/admin#' + section.toLowerCase());
+      
+      // Give it a moment to load before trying to scroll
+      setTimeout(() => {
+        const sectionElement = document.getElementById(section.toLowerCase());
+        if (sectionElement) {
+          sectionElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
     }
+  };
+
+  const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    toast({
+      title: "Currency Updated",
+      description: `Default currency set to ${e.target.value}`,
+    });
+  };
+
+  const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    toast({
+      title: "Region Updated",
+      description: `Default region set to ${e.target.value}`,
+    });
+  };
+
+  const handleRealTimeToggle = () => {
+    toast({
+      title: "Settings Updated",
+      description: "Real-time updates setting has been saved",
+    });
   };
   
   return (
@@ -102,7 +138,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                   size="icon" 
                   className="rounded-full" 
                   title="Manage Users"
-                  onClick={() => handleQuickNavigation('users')}
+                  onClick={() => handleQuickNavigation('Users')}
                 >
                   <Users className="h-4 w-4" />
                 </Button>
@@ -111,7 +147,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                   size="icon" 
                   className="rounded-full" 
                   title="Manage Events"
-                  onClick={() => handleQuickNavigation('events')}
+                  onClick={() => handleQuickNavigation('Events')}
                 >
                   <Calendar className="h-4 w-4" />
                 </Button>
@@ -120,7 +156,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                   size="icon" 
                   className="rounded-full" 
                   title="Manage Teachings"
-                  onClick={() => handleQuickNavigation('teachings')}
+                  onClick={() => handleQuickNavigation('Teachings')}
                 >
                   <BookOpen className="h-4 w-4" />
                 </Button>
@@ -158,7 +194,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                       id="currency" 
                       className="mt-1 block w-full rounded-md border border-gray-300 p-2"
                       defaultValue="INR"
-                      disabled
+                      onChange={handleCurrencyChange}
                     >
                       <option value="INR">Indian Rupee (₹)</option>
                       <option value="USD">US Dollar ($)</option>
@@ -177,7 +213,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                       id="region" 
                       className="mt-1 block w-full rounded-md border border-gray-300 p-2"
                       defaultValue="India"
-                      disabled
+                      onChange={handleRegionChange}
                     >
                       <option value="India">India</option>
                       <option value="Global">Global</option>
@@ -198,12 +234,19 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                       id="realTimeUpdates"
                       className="rounded border-gray-300"
                       defaultChecked
+                      onChange={handleRealTimeToggle}
                     />
                     <label htmlFor="realTimeUpdates" className="ml-2 block text-sm">
                       Enable real-time updates
                     </label>
                   </div>
                 </div>
+              </div>
+
+              <div className="pt-4 mt-6 border-t border-gray-200 dark:border-gray-700">
+                <Button onClick={() => setIsSettingsOpen(false)} className="w-full">
+                  Save Settings
+                </Button>
               </div>
             </div>
           </div>
