@@ -23,7 +23,7 @@ const Index = () => {
     };
   }, []);
 
-  // Simple parallax effect for scroll sections
+  // Simple parallax effect for scroll sections with improved performance
   useEffect(() => {
     const handleScroll = () => {
       const scrollSections = document.querySelectorAll('.scroll-section');
@@ -31,10 +31,13 @@ const Index = () => {
       
       scrollSections.forEach((section, index) => {
         const sectionElement = section as HTMLElement;
-        // Different scroll speeds for different sections creates parallax effect
-        // Reduced the effect slightly for better visual appearance
-        const speed = index % 2 === 0 ? 0.03 : -0.03;
-        sectionElement.style.transform = `translateY(${scrollY * speed}px)`;
+        // Use requestAnimationFrame for smoother animations
+        requestAnimationFrame(() => {
+          // Different scroll speeds for different sections creates parallax effect
+          // Reduced the effect slightly for better visual appearance
+          const speed = index % 2 === 0 ? 0.02 : -0.02;
+          sectionElement.style.transform = `translateY(${scrollY * speed}px)`;
+        });
       });
     };
     
@@ -60,9 +63,12 @@ const Index = () => {
           <section className="scroll-section relative z-10">
             <Testimonials />
           </section>
-          <section className="scroll-section relative z-10">
+          <section className="scroll-section relative z-10 pb-16">
             <DonatePreview />
           </section>
+          
+          {/* Added spacer to ensure footer visibility */}
+          <div className="h-12"></div>
         </main>
         <Footer />
       </div>
