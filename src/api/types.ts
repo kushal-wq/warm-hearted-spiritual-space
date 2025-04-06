@@ -1,5 +1,6 @@
 
-import { TypedSupabaseClient } from '@/integrations/supabase/types';
+// Remove the unnecessary import since TypedSupabaseClient doesn't exist
+// and it's not being used elsewhere in the file
 
 export interface Event {
   id: string;
