@@ -61,7 +61,7 @@ const teachingsData = [
     category: 'Philosophy',
     level: 'Intermediate',
     language: 'English',
-    description: 'An overview of classical yoga philosophy based on Patanjali's Yoga Sutras.',
+    description: "An overview of classical yoga philosophy based on Patanjali's Yoga Sutras.",
     lastUpdated: '2025-03-10',
     format: 'PDF',
   },
