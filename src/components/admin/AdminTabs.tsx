@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Mail, Calendar, BookOpen, Gift } from 'lucide-react';
+import { Users, Mail, Calendar, BookOpen, Gift, BookMarked } from 'lucide-react';
 import UsersTab from '@/components/admin/tabs/UsersTab';
 import ContactTab from '@/components/admin/tabs/ContactTab';
 import EventsTab from '@/components/admin/tabs/EventsTab';
 import TeachingsTab from '@/components/admin/tabs/TeachingsTab';
 import DonationsTab from '@/components/admin/tabs/DonationsTab';
+import BookingsTab from '@/components/admin/tabs/BookingsTab';
 import { useLocation } from 'react-router-dom';
 
 const AdminTabs = () => {
@@ -16,7 +17,7 @@ const AdminTabs = () => {
   // Set active tab based on URL hash if present
   useEffect(() => {
     const hash = location.hash.replace('#', '');
-    if (hash && ['users', 'contact', 'events', 'teachings', 'donations'].includes(hash)) {
+    if (hash && ['users', 'contact', 'events', 'teachings', 'donations', 'bookings'].includes(hash)) {
       setActiveTab(hash);
     }
   }, [location]);
@@ -42,7 +43,7 @@ const AdminTabs = () => {
           className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-spiritual-brown dark:data-[state=active]:text-spiritual-cream"
         >
           <Mail className="h-4 w-4" />
-          <span className="hidden sm:inline">Contact Submissions</span>
+          <span className="hidden sm:inline">Contact</span>
         </TabsTrigger>
         <TabsTrigger 
           value="events" 
@@ -57,6 +58,13 @@ const AdminTabs = () => {
         >
           <BookOpen className="h-4 w-4" />
           <span className="hidden sm:inline">Teachings</span>
+        </TabsTrigger>
+        <TabsTrigger 
+          value="bookings" 
+          className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-spiritual-brown dark:data-[state=active]:text-spiritual-cream"
+        >
+          <BookMarked className="h-4 w-4" />
+          <span className="hidden sm:inline">Bookings</span>
         </TabsTrigger>
         <TabsTrigger 
           value="donations" 
@@ -81,6 +89,10 @@ const AdminTabs = () => {
       
       <TabsContent value="teachings" className="focus-visible:outline-none">
         <TeachingsTab />
+      </TabsContent>
+      
+      <TabsContent value="bookings" className="focus-visible:outline-none">
+        <BookingsTab />
       </TabsContent>
       
       <TabsContent value="donations" className="focus-visible:outline-none">
