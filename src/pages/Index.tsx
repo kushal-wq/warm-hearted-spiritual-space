@@ -6,7 +6,6 @@ import Footer from '../components/Footer';
 import Hero from '../components/Hero';
 import DailyInspiration from '../components/DailyInspiration';
 import ServicesPreview from '../components/ServicesPreview';
-import UpcomingEvents from '../components/UpcomingEvents';
 import Testimonials from '../components/Testimonials';
 import DonatePreview from '../components/DonatePreview';
 import { Button } from '@/components/ui/button';
@@ -56,14 +55,8 @@ const Index = () => {
           <section className="scroll-section relative z-10">
             <DailyInspiration />
           </section>
-          <section className="scroll-section relative z-10">
-            <ServicesPreview />
-          </section>
-          <section className="scroll-section relative z-10">
-            <UpcomingEvents />
-          </section>
           
-          {/* Priest Booking Section */}
+          {/* Priest Booking Section - Moved to top */}
           <section className="scroll-section relative z-10 py-16 bg-amber-50/50">
             <div className="container mx-auto px-4">
               <div className="max-w-3xl mx-auto text-center">
@@ -82,6 +75,9 @@ const Index = () => {
             </div>
           </section>
           
+          <section className="scroll-section relative z-10">
+            <ServicesPreview />
+          </section>
           <section className="scroll-section relative z-10">
             <Testimonials />
           </section>
