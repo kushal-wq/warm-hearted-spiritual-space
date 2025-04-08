@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,38 +12,62 @@ import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Calendar, DollarSign, Star, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-
-interface PriestProfile {
-  id: string;
-  user_id: string;
-  name: string;
-  description: string;
-  specialties: string[];
-  experience_years: number;
-  avatar_url: string;
-  base_price: number;
-  availability: string;
-  location: string;
-  rating: number;
-  created_at: string;
-  updated_at: string;
-}
+import { PriestProfile } from '@/types/priest';
 
 const Priests = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
 
+  // Mock priests data for now until priest_profiles table is created
+  const mockPriests: PriestProfile[] = [
+    {
+      id: '1',
+      user_id: 'user-1',
+      name: 'Swami Ananda',
+      description: 'Experienced priest specializing in traditional ceremonies and spiritual guidance.',
+      specialties: ['Vedic Rituals', 'Marriage Ceremonies', 'Blessing Ceremonies'],
+      experience_years: 15,
+      avatar_url: '/placeholder.svg',
+      base_price: 100,
+      availability: 'Weekdays 9am-5pm, Weekends by appointment',
+      location: 'Local Temple',
+      rating: 4.8
+    },
+    {
+      id: '2',
+      user_id: 'user-2',
+      name: 'Pandit Sharma',
+      description: 'Specializes in traditional Hindu ceremonies with deep knowledge of Vedic scriptures.',
+      specialties: ['Puja Ceremonies', 'Vedic Astrology', 'Spiritual Counseling'],
+      experience_years: 20,
+      avatar_url: '/placeholder.svg',
+      base_price: 120,
+      availability: 'Available for ceremonies daily',
+      location: 'Downtown Temple',
+      rating: 4.9
+    },
+    {
+      id: '3',
+      user_id: 'user-3',
+      name: 'Acharya Patel',
+      description: 'Expert in traditional and modern ceremonies, bringing ancient wisdom to the present day.',
+      specialties: ['House Warming', 'Baby Naming', 'Funeral Services'],
+      experience_years: 10,
+      avatar_url: '/placeholder.svg',
+      base_price: 90,
+      availability: 'Flexible schedule, available on short notice',
+      location: 'Eastern Temple',
+      rating: 4.7
+    }
+  ];
+
   const { data: priests, isLoading, error } = useQuery({
     queryKey: ['priests'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('priest_profiles')
-        .select('*')
-        .order('name');
-      
-      if (error) throw error;
-      return data as PriestProfile[];
+      // In a real implementation, this would fetch from priest_profiles
+      // For now, return mock data
+      return mockPriests;
     }
   });
 
@@ -124,10 +148,10 @@ const Priests = () => {
                   {[...Array(5)].map((_, i) => (
                     <Star 
                       key={i} 
-                      className={`h-4 w-4 ${i < Math.round(priest.rating) ? 'fill-current' : 'fill-none'}`} 
+                      className={`h-4 w-4 ${i < Math.round(priest.rating || 5) ? 'fill-current' : 'fill-none'}`} 
                     />
                   ))}
-                  <span className="ml-2 text-sm text-gray-600">({priest.rating.toFixed(1)})</span>
+                  <span className="ml-2 text-sm text-gray-600">({(priest.rating || 5).toFixed(1)})</span>
                 </div>
                 <div className="flex flex-wrap justify-center gap-2 mt-3">
                   {priest.specialties.map((specialty, index) => (
