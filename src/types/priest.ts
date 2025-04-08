@@ -1,4 +1,3 @@
-
 export interface PriestProfile {
   id?: string;
   user_id: string;
@@ -27,4 +26,15 @@ export interface PriestBooking {
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   created_at?: string;
   updated_at?: string;
+}
+
+export interface UserProfile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  is_admin: boolean;
+  avatar_url?: string | null;
+  email?: string;
+  is_priest?: boolean;
+  priest_status?: 'pending' | 'approved' | 'rejected' | null;
 }

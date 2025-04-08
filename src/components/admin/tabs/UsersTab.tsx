@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, Search, RefreshCw, Mail, User } from 'lucide-react';
+import { Shield, Search, RefreshCw, Mail, User, Check, X, Clock } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -15,12 +15,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from '@/components/ui/badge';
 
 interface Profile {
   id: string;
   first_name: string | null;
   last_name: string | null;
   is_admin: boolean;
+  is_priest: boolean;
+  priest_status: 'pending' | 'approved' | 'rejected' | null;
   email?: string;
 }
 
@@ -33,6 +46,8 @@ interface AuthUser {
 const UsersTab = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [dialogType, setDialogType] = useState<'approve' | 'reject' | 'admin' | null>(null);
 
   // Fetch user profiles with admin status
   const { data: profiles, isLoading: profilesLoading, refetch: refetchProfiles } = useQuery({
@@ -91,6 +106,35 @@ const UsersTab = () => {
     }
   };
 
+  // Handle priest approval
+  const handlePriestApproval = async (userId: string, status: 'approved' | 'rejected') => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          priest_status: status,
+          is_priest: status === 'approved' ? true : false 
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Priest application ${status === 'approved' ? 'approved' : 'rejected'} successfully`,
+      });
+      
+      setDialogType(null);
+      refetchProfiles();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to update priest status",
+      });
+    }
+  };
+
   // Filter users based on search term
   const filteredProfiles = searchTerm 
     ? profiles?.filter(profile => 
@@ -145,7 +189,7 @@ const UsersTab = () => {
                 <TableRow className="hover:bg-spiritual-cream/10 dark:hover:bg-gray-800/50">
                   <TableHead className="w-[200px]">Name</TableHead>
                   <TableHead className="w-[200px]">Email</TableHead>
-                  <TableHead>Admin Status</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -174,28 +218,90 @@ const UsersTab = () => {
                         {profile.email}
                       </TableCell>
                       <TableCell>
-                        {profile.is_admin ? (
-                          <span className="px-2 py-1 bg-spiritual-gold/20 text-spiritual-brown dark:text-spiritual-cream rounded-full text-xs inline-flex items-center">
-                            <Shield className="h-3 w-3 mr-1" />
-                            Admin
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full text-xs">
-                            User
-                          </span>
-                        )}
+                        <div className="flex flex-wrap gap-1">
+                          {profile.is_admin && (
+                            <Badge 
+                              variant="outline" 
+                              className="bg-spiritual-gold/20 text-spiritual-brown dark:text-spiritual-cream border-spiritual-gold/30 flex items-center"
+                            >
+                              <Shield className="h-3 w-3 mr-1" />
+                              Admin
+                            </Badge>
+                          )}
+                          
+                          {profile.priest_status === 'pending' && (
+                            <Badge 
+                              variant="outline" 
+                              className="bg-amber-50 text-amber-700 border-amber-200 flex items-center"
+                            >
+                              <Clock className="h-3 w-3 mr-1" />
+                              Priest Request
+                            </Badge>
+                          )}
+                          
+                          {profile.priest_status === 'approved' && (
+                            <Badge 
+                              variant="outline" 
+                              className="bg-green-50 text-green-700 border-green-200 flex items-center"
+                            >
+                              <Check className="h-3 w-3 mr-1" />
+                              Priest
+                            </Badge>
+                          )}
+                          
+                          {(!profile.is_admin && !profile.priest_status) && (
+                            <Badge 
+                              variant="outline" 
+                              className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+                            >
+                              User
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => toggleAdminStatus(profile.id, profile.is_admin)}
-                          className={profile.is_admin 
-                            ? "text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30" 
-                            : "text-spiritual-gold hover:bg-spiritual-gold/10 hover:text-spiritual-gold"}
-                        >
-                          {profile.is_admin ? 'Revoke Admin' : 'Make Admin'}
-                        </Button>
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                              setSelectedUserId(profile.id);
+                              setDialogType('admin');
+                            }}
+                            className={profile.is_admin 
+                              ? "text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30" 
+                              : "text-spiritual-gold hover:bg-spiritual-gold/10 hover:text-spiritual-gold"}
+                          >
+                            {profile.is_admin ? 'Revoke Admin' : 'Make Admin'}
+                          </Button>
+                          
+                          {profile.priest_status === 'pending' && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedUserId(profile.id);
+                                  setDialogType('approve');
+                                }}
+                                className="text-green-600 hover:bg-green-50 hover:text-green-700"
+                              >
+                                <Check className="h-4 w-4 mr-1" /> Approve
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedUserId(profile.id);
+                                  setDialogType('reject');
+                                }}
+                                className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                              >
+                                <X className="h-4 w-4 mr-1" /> Reject
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -205,6 +311,82 @@ const UsersTab = () => {
           </div>
         )}
       </CardContent>
+      
+      {/* Confirm Admin Status Change Dialog */}
+      <AlertDialog open={dialogType === 'admin' && !!selectedUserId} onOpenChange={() => dialogType === 'admin' && setDialogType(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {profiles?.find(p => p.id === selectedUserId)?.is_admin 
+                ? 'Revoke Admin Status' 
+                : 'Grant Admin Status'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {profiles?.find(p => p.id === selectedUserId)?.is_admin 
+                ? 'Are you sure you want to remove admin privileges from this user?' 
+                : 'Are you sure you want to grant admin privileges to this user?'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDialogType(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (selectedUserId) {
+                  const profile = profiles?.find(p => p.id === selectedUserId);
+                  if (profile) {
+                    toggleAdminStatus(selectedUserId, profile.is_admin);
+                    setDialogType(null);
+                  }
+                }
+              }}
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm Priest Approval Dialog */}
+      <AlertDialog open={dialogType === 'approve' && !!selectedUserId} onOpenChange={() => dialogType === 'approve' && setDialogType(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Approve Priest Request</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to approve this user as a priest? They will gain access to the priest dashboard and functionality.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDialogType(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => selectedUserId && handlePriestApproval(selectedUserId, 'approved')}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Approve
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm Priest Rejection Dialog */}
+      <AlertDialog open={dialogType === 'reject' && !!selectedUserId} onOpenChange={() => dialogType === 'reject' && setDialogType(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reject Priest Request</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to reject this user's request to become a priest?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDialogType(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => selectedUserId && handlePriestApproval(selectedUserId, 'rejected')}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Reject
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
