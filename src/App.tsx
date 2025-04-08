@@ -19,6 +19,8 @@ import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import PriestDashboard from "./pages/PriestDashboard";
+import Priests from "./pages/Priests"; // Add the new Priests page
+import BookPriest from "./pages/BookPriest"; // Add the BookPriest page
 
 const queryClient = new QueryClient();
 
@@ -42,6 +44,8 @@ const App = () => (
               <Route path="/admin" element={<Admin />} />
               <Route path="/priest" element={<PriestDashboard />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/priests" element={<Priests />} />
+              <Route path="/book-priest/:id" element={<BookPriest />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

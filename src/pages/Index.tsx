@@ -1,5 +1,6 @@
 
 import React, { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Hero from '../components/Hero';
@@ -8,6 +9,8 @@ import ServicesPreview from '../components/ServicesPreview';
 import UpcomingEvents from '../components/UpcomingEvents';
 import Testimonials from '../components/Testimonials';
 import DonatePreview from '../components/DonatePreview';
+import { Button } from '@/components/ui/button';
+import { Users } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Create a client
@@ -59,6 +62,26 @@ const Index = () => {
           <section className="scroll-section relative z-10">
             <UpcomingEvents />
           </section>
+          
+          {/* Priest Booking Section */}
+          <section className="scroll-section relative z-10 py-16 bg-amber-50/50">
+            <div className="container mx-auto px-4">
+              <div className="max-w-3xl mx-auto text-center">
+                <h2 className="text-3xl font-bold text-spiritual-brown mb-4">Connect with Our Priests</h2>
+                <p className="text-lg text-spiritual-brown/80 mb-8">
+                  Book personalized services with our experienced priests for home pujas, ceremonies, 
+                  consultations, and spiritual guidance.
+                </p>
+                <Link to="/priests">
+                  <Button className="bg-spiritual-gold hover:bg-spiritual-gold/90 text-white">
+                    <Users className="mr-2 h-4 w-4" />
+                    Browse Our Priests
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </section>
+          
           <section className="scroll-section relative z-10">
             <Testimonials />
           </section>

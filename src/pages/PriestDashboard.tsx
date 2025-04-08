@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +9,7 @@ import PriestLayout from '@/components/priest/PriestLayout';
 import PriestSchedule from '@/components/priest/PriestSchedule';
 import PriestRituals from '@/components/priest/PriestRituals';
 import PriestTeachings from '@/components/priest/PriestTeachings';
+import PriestProfile from '@/components/priest/PriestProfile';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Steps } from '@/components/ui/steps';
 
@@ -42,7 +42,7 @@ const PriestDashboard = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<'schedule' | 'rituals' | 'teachings'>('schedule');
+  const [activeTab, setActiveTab] = useState<'schedule' | 'rituals' | 'teachings' | 'profile'>('schedule');
   const [showAccessInstructions, setShowAccessInstructions] = useState(false);
   
   // In a real app, you would check if the user is a priest
@@ -108,7 +108,7 @@ const PriestDashboard = () => {
                 <li>Sign in with your priest account credentials or Google authentication</li>
                 <li>Navigate to the Priest Dashboard from the user dropdown in the top right</li>
                 <li>Request admin approval if this is your first time accessing priestly functions</li>
-                <li>Explore the schedule, rituals, and teachings sections using the tabs below</li>
+                <li>Explore the schedule, rituals, teachings, and profile sections using the tabs below</li>
               </ol>
               
               <div className="mt-5 flex justify-end">
@@ -204,6 +204,27 @@ const PriestDashboard = () => {
               </Button>
             </CardFooter>
           </Card>
+
+          <Card>
+            <CardHeader className="bg-purple-50 dark:bg-purple-900/20">
+              <CardTitle className="flex items-center">
+                <Users className="mr-2 h-5 w-5 text-spiritual-gold" />
+                Your Public Profile
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <p className="text-muted-foreground mb-3">Manage how you appear to users seeking your services.</p>
+              <div className="text-sm">
+                <p className="font-medium">Profile Visibility:</p>
+                <p className="text-muted-foreground">Users can see your profile on the temple website</p>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button variant="outline" className="w-full text-spiritual-gold" onClick={() => setActiveTab('profile')}>
+                Edit Profile
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
         
         {/* Selected tab content */}
@@ -234,6 +255,14 @@ const PriestDashboard = () => {
                 <BookOpen className="h-4 w-4 mr-2" />
                 Teachings
               </Button>
+              <Button 
+                variant={activeTab === 'profile' ? 'default' : 'outline'} 
+                onClick={() => setActiveTab('profile')}
+                className={activeTab === 'profile' ? 'bg-spiritual-gold hover:bg-spiritual-gold/90' : ''}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Profile
+              </Button>
             </div>
             
             <Button variant="outline" size="icon">
@@ -244,6 +273,7 @@ const PriestDashboard = () => {
           {activeTab === 'schedule' && <PriestSchedule />}
           {activeTab === 'rituals' && <PriestRituals />}
           {activeTab === 'teachings' && <PriestTeachings />}
+          {activeTab === 'profile' && <PriestProfile />}
         </div>
       </div>
     </PriestLayout>
