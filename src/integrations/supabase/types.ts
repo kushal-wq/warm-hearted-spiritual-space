@@ -99,6 +99,104 @@ export type Database = {
         }
         Relationships: []
       }
+      priest_bookings: {
+        Row: {
+          address: string
+          booking_date: string
+          created_at: string
+          id: string
+          notes: string | null
+          price: number
+          priest_id: string
+          purpose: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address: string
+          booking_date: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          price?: number
+          priest_id: string
+          purpose: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          booking_date?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          price?: number
+          priest_id?: string
+          purpose?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "priest_bookings_priest_id_fkey"
+            columns: ["priest_id"]
+            isOneToOne: false
+            referencedRelation: "priest_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      priest_profiles: {
+        Row: {
+          availability: string
+          avatar_url: string
+          base_price: number
+          created_at: string
+          description: string
+          experience_years: number
+          id: string
+          location: string
+          name: string
+          rating: number
+          specialties: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          availability?: string
+          avatar_url?: string
+          base_price?: number
+          created_at?: string
+          description: string
+          experience_years?: number
+          id?: string
+          location?: string
+          name: string
+          rating?: number
+          specialties?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          availability?: string
+          avatar_url?: string
+          base_price?: number
+          created_at?: string
+          description?: string
+          experience_years?: number
+          id?: string
+          location?: string
+          name?: string
+          rating?: number
+          specialties?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

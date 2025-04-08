@@ -34,36 +34,46 @@ const PriestProfile = () => {
     location: '',
   });
 
-  // Fetch priest profile - using profiles table for now as a workaround
+  // Fetch priest profile
   const { data, isLoading, error } = useQuery({
     queryKey: ['priestProfile', user?.id],
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
       
-      const { data, error } = await supabase
+      // Try to fetch existing priest profile
+      const { data: priestProfile, error: priestProfileError } = await supabase
+        .from('priest_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      // If we found an existing priest profile, return it
+      if (priestProfile) return priestProfile as PriestProfileType;
+      
+      // If there was no priest profile or an error occurred
+      // Fetch from profiles to get initial data
+      const { data: userProfile, error: userProfileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
       
-      if (error && error.code !== 'PGRST116') throw error; // PGRST116 is 'not found'
+      if (userProfileError && userProfileError.code !== 'PGRST116') throw userProfileError;
       
-      // Create a mock priest profile from the profile data
-      // In a real implementation, this would query the priest_profiles table
-      const mockPriestProfile: PriestProfileType = {
-        id: data?.id,
-        user_id: data?.id || user.id,
-        name: `${data?.first_name || ''} ${data?.last_name || ''}`.trim() || 'Unnamed Priest',
+      // Create a new priest profile object with user data if available
+      const newPriestProfile: PriestProfileType = {
+        user_id: user.id,
+        name: `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim() || 'New Priest',
         description: 'Add your description here',
         specialties: [],
         experience_years: 0,
-        avatar_url: data?.avatar_url || '',
+        avatar_url: userProfile?.avatar_url || '/placeholder.svg',
         base_price: 0,
         availability: 'Weekdays 9am-5pm',
         location: 'Local Temple',
       };
       
-      return mockPriestProfile;
+      return newPriestProfile;
     },
     enabled: !!user
   });
@@ -106,21 +116,56 @@ const PriestProfile = () => {
     mutationFn: async (profileData: PriestProfileType) => {
       if (!user) throw new Error('User not authenticated');
       
-      // For now we'll just update the profiles table as a workaround
-      // In a real implementation, this would update priest_profiles
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({
-          first_name: profileData.name.split(' ')[0],
-          last_name: profileData.name.split(' ').slice(1).join(' '),
-          avatar_url: profileData.avatar_url,
-        })
-        .eq('id', user.id)
-        .select()
-        .single();
+      // Check if priest profile exists already
+      const { data: existingProfile, error: checkError } = await supabase
+        .from('priest_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (checkError) throw checkError;
+      
+      if (existingProfile) {
+        // Update existing profile
+        const { data, error } = await supabase
+          .from('priest_profiles')
+          .update({
+            name: profileData.name,
+            description: profileData.description,
+            specialties: profileData.specialties,
+            experience_years: profileData.experience_years,
+            avatar_url: profileData.avatar_url,
+            base_price: profileData.base_price,
+            availability: profileData.availability,
+            location: profileData.location
+          })
+          .eq('user_id', user.id)
+          .select()
+          .single();
           
-      if (error) throw error;
-      return data;
+        if (error) throw error;
+        return data;
+      } else {
+        // Insert new profile
+        const { data, error } = await supabase
+          .from('priest_profiles')
+          .insert({
+            user_id: user.id,
+            name: profileData.name,
+            description: profileData.description,
+            specialties: profileData.specialties,
+            experience_years: profileData.experience_years,
+            avatar_url: profileData.avatar_url,
+            base_price: profileData.base_price,
+            availability: profileData.availability,
+            location: profileData.location
+          })
+          .select()
+          .single();
+          
+        if (error) throw error;
+        return data;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['priestProfile'] });
