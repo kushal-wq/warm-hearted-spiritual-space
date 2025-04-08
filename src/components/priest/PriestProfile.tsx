@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,24 +33,19 @@ const PriestProfile = () => {
     location: '',
   });
 
-  // Fetch priest profile
   const { data, isLoading, error } = useQuery({
     queryKey: ['priestProfile', user?.id],
     queryFn: async () => {
       if (!user) throw new Error('User not authenticated');
       
-      // Try to fetch existing priest profile
       const { data: priestProfile, error: priestProfileError } = await supabase
         .from('priest_profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
       
-      // If we found an existing priest profile, return it
       if (priestProfile) return priestProfile as PriestProfileType;
       
-      // If there was no priest profile or an error occurred
-      // Fetch from profiles to get initial data
       const { data: userProfile, error: userProfileError } = await supabase
         .from('profiles')
         .select('*')
@@ -60,7 +54,6 @@ const PriestProfile = () => {
       
       if (userProfileError && userProfileError.code !== 'PGRST116') throw userProfileError;
       
-      // Create a new priest profile object with user data if available
       const newPriestProfile: PriestProfileType = {
         user_id: user.id,
         name: `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim() || 'New Priest',
@@ -78,7 +71,6 @@ const PriestProfile = () => {
     enabled: !!user
   });
 
-  // Update profile when data is loaded
   useEffect(() => {
     if (data) {
       setProfile(data);
@@ -88,7 +80,6 @@ const PriestProfile = () => {
     }
   }, [data]);
 
-  // Upload avatar mutation
   const uploadAvatarMutation = useMutation({
     mutationFn: async (file: File) => {
       if (!user) throw new Error('User not authenticated');
@@ -111,12 +102,10 @@ const PriestProfile = () => {
     }
   });
 
-  // Save profile mutation
   const saveProfileMutation = useMutation({
     mutationFn: async (profileData: PriestProfileType) => {
       if (!user) throw new Error('User not authenticated');
       
-      // Check if priest profile exists already
       const { data: existingProfile, error: checkError } = await supabase
         .from('priest_profiles')
         .select('id')
@@ -126,7 +115,6 @@ const PriestProfile = () => {
       if (checkError) throw checkError;
       
       if (existingProfile) {
-        // Update existing profile
         const { data, error } = await supabase
           .from('priest_profiles')
           .update({
@@ -146,7 +134,6 @@ const PriestProfile = () => {
         if (error) throw error;
         return data;
       } else {
-        // Insert new profile
         const { data, error } = await supabase
           .from('priest_profiles')
           .insert({
@@ -188,7 +175,6 @@ const PriestProfile = () => {
       const file = e.target.files[0];
       setAvatarFile(file);
       
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result as string);
@@ -224,18 +210,14 @@ const PriestProfile = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     try {
       let avatarUrl = profile.avatar_url;
       
-      // Upload new avatar if selected
       if (avatarFile) {
         avatarUrl = await uploadAvatarMutation.mutateAsync(avatarFile);
       }
       
-      // Save profile with updated avatar URL
       await saveProfileMutation.mutateAsync({
         ...profile,
         avatar_url: avatarUrl

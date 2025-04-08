@@ -63,23 +63,32 @@ const BookPriest = () => {
     queryFn: async () => {
       if (!id) throw new Error("Priest ID is required");
       
-      // This is a workaround until priest_profiles table is created
-      // For now, mocking the priest data
-      const mockPriest: PriestProfile = {
-        id,
-        user_id: "mock-user-id",
-        name: "Swami Ananda",
-        description: "Experienced priest specializing in traditional ceremonies and spiritual guidance.",
-        specialties: ["Vedic Rituals", "Marriage Ceremonies", "Blessing Ceremonies"],
-        experience_years: 15,
-        avatar_url: "/placeholder.svg",
-        base_price: 100,
-        availability: "Weekdays 9am-5pm, Weekends by appointment",
-        location: "Local Temple",
-        rating: 4.8
-      };
+      // Try to fetch the priest profile from the database
+      const { data: priestProfile, error } = await supabase
+        .from('priest_profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) {
+        console.error("Error fetching priest:", error);
+        // Fall back to mock data if there's an error
+        return {
+          id,
+          user_id: "mock-user-id",
+          name: "Swami Ananda",
+          description: "Experienced priest specializing in traditional ceremonies and spiritual guidance.",
+          specialties: ["Vedic Rituals", "Marriage Ceremonies", "Blessing Ceremonies"],
+          experience_years: 15,
+          avatar_url: "/placeholder.svg",
+          base_price: 100,
+          availability: "Weekdays 9am-5pm, Weekends by appointment",
+          location: "Local Temple",
+          rating: 4.8
+        } as PriestProfile;
+      }
       
-      return mockPriest;
+      return priestProfile as PriestProfile;
     },
     enabled: !!id
   });
@@ -133,7 +142,22 @@ const BookPriest = () => {
       const [hours, minutes] = booking.time.split(':').map(Number);
       bookingDateTime.setHours(hours, minutes);
       
-      // For now, just show a success message since priest_bookings table doesn't exist yet
+      // Try to insert the booking into the database
+      const { error } = await supabase
+        .from('priest_bookings')
+        .insert({
+          user_id: user.id,
+          priest_id: id as string,
+          booking_date: bookingDateTime.toISOString(),
+          purpose: booking.purpose,
+          address: booking.address,
+          notes: booking.additionalNotes || null,
+          price: priest?.base_price || 0,
+          status: 'pending'
+        });
+        
+      if (error) throw error;
+      
       toast({
         title: "Booking Submitted",
         description: "Your booking request has been sent to the priest for confirmation.",
@@ -203,35 +227,35 @@ const BookPriest = () => {
                   <div className="flex justify-center mb-2">
                     <Avatar className="h-24 w-24 border-2 border-spiritual-gold">
                       <img 
-                        src={priest.avatar_url || '/placeholder.svg'} 
-                        alt={priest.name} 
+                        src={priest?.avatar_url || '/placeholder.svg'} 
+                        alt={priest?.name} 
                         className="object-cover"
                       />
                     </Avatar>
                   </div>
-                  <CardTitle className="text-center text-spiritual-brown">{priest.name}</CardTitle>
+                  <CardTitle className="text-center text-spiritual-brown">{priest?.name}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     <div>
                       <h4 className="text-sm font-medium text-spiritual-brown">Specialties</h4>
-                      <p className="text-sm text-gray-600">{priest.specialties.join(', ')}</p>
+                      <p className="text-sm text-gray-600">{priest?.specialties.join(', ')}</p>
                     </div>
                     <div>
                       <h4 className="text-sm font-medium text-spiritual-brown">Experience</h4>
-                      <p className="text-sm text-gray-600">{priest.experience_years} years</p>
+                      <p className="text-sm text-gray-600">{priest?.experience_years} years</p>
                     </div>
                     <div>
                       <h4 className="text-sm font-medium text-spiritual-brown">Location</h4>
-                      <p className="text-sm text-gray-600">{priest.location}</p>
+                      <p className="text-sm text-gray-600">{priest?.location}</p>
                     </div>
                     <div>
                       <h4 className="text-sm font-medium text-spiritual-brown">Base Price</h4>
-                      <p className="text-sm text-gray-600">${priest.base_price} per service</p>
+                      <p className="text-sm text-gray-600">${priest?.base_price} per service</p>
                     </div>
                     <div>
                       <h4 className="text-sm font-medium text-spiritual-brown">Availability</h4>
-                      <p className="text-sm text-gray-600">{priest.availability}</p>
+                      <p className="text-sm text-gray-600">{priest?.availability}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -241,7 +265,7 @@ const BookPriest = () => {
             <div className="md:col-span-2">
               <Card className="bg-white border-spiritual-gold/20">
                 <CardHeader>
-                  <CardTitle className="text-spiritual-brown">Book Services with {priest.name}</CardTitle>
+                  <CardTitle className="text-spiritual-brown">Book Services with {priest?.name}</CardTitle>
                   <CardDescription>
                     Fill in the details below to request services from this priest.
                   </CardDescription>
@@ -360,7 +384,7 @@ const BookPriest = () => {
                     <div className="pt-4 border-t">
                       <div className="flex justify-between items-center mb-4">
                         <span className="text-spiritual-brown font-medium">Service Fee:</span>
-                        <span className="text-spiritual-brown font-bold text-lg">${priest.base_price}</span>
+                        <span className="text-spiritual-brown font-bold text-lg">${priest?.base_price}</span>
                       </div>
                       
                       <Button 

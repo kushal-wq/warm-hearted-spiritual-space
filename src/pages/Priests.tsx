@@ -19,55 +19,69 @@ const Priests = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Mock priests data for now until priest_profiles table is created
-  const mockPriests: PriestProfile[] = [
-    {
-      id: '1',
-      user_id: 'user-1',
-      name: 'Swami Ananda',
-      description: 'Experienced priest specializing in traditional ceremonies and spiritual guidance.',
-      specialties: ['Vedic Rituals', 'Marriage Ceremonies', 'Blessing Ceremonies'],
-      experience_years: 15,
-      avatar_url: '/placeholder.svg',
-      base_price: 100,
-      availability: 'Weekdays 9am-5pm, Weekends by appointment',
-      location: 'Local Temple',
-      rating: 4.8
-    },
-    {
-      id: '2',
-      user_id: 'user-2',
-      name: 'Pandit Sharma',
-      description: 'Specializes in traditional Hindu ceremonies with deep knowledge of Vedic scriptures.',
-      specialties: ['Puja Ceremonies', 'Vedic Astrology', 'Spiritual Counseling'],
-      experience_years: 20,
-      avatar_url: '/placeholder.svg',
-      base_price: 120,
-      availability: 'Available for ceremonies daily',
-      location: 'Downtown Temple',
-      rating: 4.9
-    },
-    {
-      id: '3',
-      user_id: 'user-3',
-      name: 'Acharya Patel',
-      description: 'Expert in traditional and modern ceremonies, bringing ancient wisdom to the present day.',
-      specialties: ['House Warming', 'Baby Naming', 'Funeral Services'],
-      experience_years: 10,
-      avatar_url: '/placeholder.svg',
-      base_price: 90,
-      availability: 'Flexible schedule, available on short notice',
-      location: 'Eastern Temple',
-      rating: 4.7
-    }
-  ];
-
   const { data: priests, isLoading, error } = useQuery({
     queryKey: ['priests'],
     queryFn: async () => {
-      // In a real implementation, this would fetch from priest_profiles
-      // For now, return mock data
-      return mockPriests;
+      try {
+        const { data: priestProfiles, error } = await supabase
+          .from('priest_profiles')
+          .select('*');
+          
+        if (error) {
+          console.error("Error fetching priests:", error);
+          throw error;
+        }
+        
+        if (priestProfiles && priestProfiles.length > 0) {
+          return priestProfiles as PriestProfile[];
+        }
+        
+        // Fall back to mock data if no priests are found
+        return [
+          {
+            id: '1',
+            user_id: 'user-1',
+            name: 'Swami Ananda',
+            description: 'Experienced priest specializing in traditional ceremonies and spiritual guidance.',
+            specialties: ['Vedic Rituals', 'Marriage Ceremonies', 'Blessing Ceremonies'],
+            experience_years: 15,
+            avatar_url: '/placeholder.svg',
+            base_price: 100,
+            availability: 'Weekdays 9am-5pm, Weekends by appointment',
+            location: 'Local Temple',
+            rating: 4.8
+          },
+          {
+            id: '2',
+            user_id: 'user-2',
+            name: 'Pandit Sharma',
+            description: 'Specializes in traditional Hindu ceremonies with deep knowledge of Vedic scriptures.',
+            specialties: ['Puja Ceremonies', 'Vedic Astrology', 'Spiritual Counseling'],
+            experience_years: 20,
+            avatar_url: '/placeholder.svg',
+            base_price: 120,
+            availability: 'Available for ceremonies daily',
+            location: 'Downtown Temple',
+            rating: 4.9
+          },
+          {
+            id: '3',
+            user_id: 'user-3',
+            name: 'Acharya Patel',
+            description: 'Expert in traditional and modern ceremonies, bringing ancient wisdom to the present day.',
+            specialties: ['House Warming', 'Baby Naming', 'Funeral Services'],
+            experience_years: 10,
+            avatar_url: '/placeholder.svg',
+            base_price: 90,
+            availability: 'Flexible schedule, available on short notice',
+            location: 'Eastern Temple',
+            rating: 4.7
+          }
+        ] as PriestProfile[];
+      } catch (error) {
+        console.error("Error in priest query:", error);
+        throw error;
+      }
     }
   });
 
