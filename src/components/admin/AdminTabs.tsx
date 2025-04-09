@@ -1,13 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Mail, Calendar, BookOpen, Gift, BookMarked } from 'lucide-react';
+import { Users, Mail, Calendar, BookOpen, Gift, BookMarked, UserCheck } from 'lucide-react';
 import UsersTab from '@/components/admin/tabs/UsersTab';
 import ContactTab from '@/components/admin/tabs/ContactTab';
 import EventsTab from '@/components/admin/tabs/EventsTab';
 import TeachingsTab from '@/components/admin/tabs/TeachingsTab';
 import DonationsTab from '@/components/admin/tabs/DonationsTab';
 import BookingsTab from '@/components/admin/tabs/BookingsTab';
+import PriestBookingsTab from '@/components/admin/tabs/PriestBookingsTab';
 import { useLocation } from 'react-router-dom';
 
 const AdminTabs = () => {
@@ -17,7 +17,7 @@ const AdminTabs = () => {
   // Set active tab based on URL hash if present
   useEffect(() => {
     const hash = location.hash.replace('#', '');
-    if (hash && ['users', 'contact', 'events', 'teachings', 'donations', 'bookings'].includes(hash)) {
+    if (hash && ['users', 'contact', 'events', 'teachings', 'donations', 'bookings', 'priest-bookings'].includes(hash)) {
       setActiveTab(hash);
     }
   }, [location]);
@@ -37,6 +37,13 @@ const AdminTabs = () => {
         >
           <Users className="h-4 w-4" />
           <span className="hidden sm:inline">Users</span>
+        </TabsTrigger>
+        <TabsTrigger 
+          value="priest-bookings" 
+          className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:text-spiritual-brown dark:data-[state=active]:text-spiritual-cream"
+        >
+          <UserCheck className="h-4 w-4" />
+          <span className="hidden sm:inline">Priest Bookings</span>
         </TabsTrigger>
         <TabsTrigger 
           value="contact" 
@@ -77,6 +84,10 @@ const AdminTabs = () => {
       
       <TabsContent value="users" className="focus-visible:outline-none">
         <UsersTab />
+      </TabsContent>
+      
+      <TabsContent value="priest-bookings" className="focus-visible:outline-none">
+        <PriestBookingsTab />
       </TabsContent>
       
       <TabsContent value="contact" className="focus-visible:outline-none">

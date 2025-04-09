@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, Search, RefreshCw, Mail, User, Check, X, Clock } from 'lucide-react';
+import { Shield, Search, RefreshCw, Mail, User, Check, X, Clock, UserCheck } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -26,6 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface Profile {
   id: string;
@@ -51,6 +51,7 @@ const UsersTab = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [dialogType, setDialogType] = useState<'approve' | 'reject' | 'admin' | null>(null);
+  const [activeTab, setActiveTab] = useState<'all' | 'priests' | 'pending'>('all');
 
   // Fetch user profiles with admin status
   const { data: profiles, isLoading: profilesLoading, refetch: refetchProfiles } = useQuery({
@@ -76,7 +77,9 @@ const UsersTab = () => {
           const authUser = (authUsers.users as AuthUser[]).find(u => u.id === profile.id);
           return {
             ...profile,
-            email: authUser?.email || 'Unknown'
+            email: authUser?.email || 'Unknown',
+            is_priest: profile.is_priest || false,
+            priest_status: profile.priest_status || null
           };
         });
         
@@ -147,14 +150,28 @@ const UsersTab = () => {
     }
   };
 
-  // Filter users based on search term
-  const filteredProfiles = searchTerm 
-    ? profiles?.filter(profile => 
-        (profile.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        profile.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        profile.email?.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
-    : profiles;
+  // Filter and sort users based on search term and active tab
+  const filteredProfiles = profiles?.filter(profile => {
+    // First apply search term filter
+    const matchesSearch = searchTerm 
+      ? (profile.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+         profile.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+         profile.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+      : true;
+    
+    // Then apply tab filter
+    switch (activeTab) {
+      case 'priests':
+        return matchesSearch && profile.is_priest;
+      case 'pending':
+        return matchesSearch && profile.priest_status === 'pending';
+      default:
+        return matchesSearch;
+    }
+  });
+
+  // Count pending priest applications
+  const pendingCount = profiles?.filter(p => p.priest_status === 'pending').length || 0;
 
   return (
     <Card className="shadow-sm hover:shadow-md transition-all duration-300">
@@ -188,6 +205,26 @@ const UsersTab = () => {
           </div>
         </div>
       </CardHeader>
+
+      <div className="p-4 bg-gray-50 dark:bg-gray-800/30 border-b border-gray-100 dark:border-gray-700">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'all' | 'priests' | 'pending')}>
+          <TabsList className="grid grid-cols-3 max-w-md">
+            <TabsTrigger value="all">All Users</TabsTrigger>
+            <TabsTrigger value="priests">
+              Priests
+            </TabsTrigger>
+            <TabsTrigger value="pending" className="relative">
+              Pending
+              {pendingCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                  {pendingCount}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
       <CardContent className="p-0">
         {profilesLoading ? (
           <div className="py-10 text-center">
@@ -217,7 +254,10 @@ const UsersTab = () => {
                   filteredProfiles?.map((profile) => (
                     <TableRow 
                       key={profile.id} 
-                      className="hover:bg-spiritual-cream/10 dark:hover:bg-gray-800/50 transition-colors duration-150"
+                      className={`
+                        hover:bg-spiritual-cream/10 dark:hover:bg-gray-800/50 transition-colors duration-150
+                        ${profile.priest_status === 'pending' ? 'bg-amber-50/30 dark:bg-amber-900/10' : ''}
+                      `}
                     >
                       <TableCell className="font-medium">
                         {profile.first_name || profile.last_name 
@@ -256,7 +296,7 @@ const UsersTab = () => {
                               variant="outline" 
                               className="bg-green-50 text-green-700 border-green-200 flex items-center"
                             >
-                              <Check className="h-3 w-3 mr-1" />
+                              <UserCheck className="h-3 w-3 mr-1" />
                               Priest
                             </Badge>
                           )}
