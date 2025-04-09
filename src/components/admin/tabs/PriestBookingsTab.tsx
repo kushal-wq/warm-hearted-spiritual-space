@@ -53,13 +53,18 @@ const PriestBookingsTab = () => {
 
   // Filter bookings based on search term
   const filteredBookings = searchTerm 
-    ? bookings?.filter(booking => 
-        (booking.profiles?.first_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-        (booking.profiles?.last_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (booking.priest_profiles?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.address.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+    ? bookings?.filter(booking => {
+        // Safely access potentially undefined nested properties
+        const firstName = booking.profiles?.first_name || '';
+        const lastName = booking.profiles?.last_name || '';
+        const priestName = booking.priest_profiles?.name || '';
+        
+        return firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          priestName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          booking.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          booking.address.toLowerCase().includes(searchTerm.toLowerCase());
+      })
     : bookings;
 
   // Function to get status badge color
