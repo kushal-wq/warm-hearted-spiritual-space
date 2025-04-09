@@ -28,10 +28,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state changed:", event);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // Use setTimeout to avoid potential recursion issues
           setTimeout(() => {
             checkUserAdmin(session.user.id);
           }, 0);
@@ -43,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session check:", session ? "Has session" : "No session");
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -52,18 +55,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log("Cleaning up auth subscription");
+      subscription.unsubscribe();
+    };
   }, []);
 
   const checkUserAdmin = async (userId: string) => {
     try {
+      console.log("Checking admin status for user:", userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('is_admin')
         .eq('id', userId)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error checking admin status:', error);
+        return;
+      }
+      
+      console.log("Admin check result:", data);
       setIsAdmin(data?.is_admin || false);
     } catch (error) {
       console.error('Error checking admin status:', error);
@@ -74,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      console.log("Attempting sign in for:", email);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       toast({
@@ -81,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: "Successfully signed in!",
       });
     } catch (error: any) {
+      console.error("Sign in error:", error);
       toast({
         variant: "destructive",
         title: "Sign in failed",
@@ -95,6 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       setIsLoading(true);
+      console.log("Attempting Google sign in");
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -107,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: "Successfully initiated Google sign in!",
       });
     } catch (error: any) {
+      console.error("Google sign in error:", error);
       toast({
         variant: "destructive",
         title: "Google sign in failed",
@@ -121,6 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
       setIsLoading(true);
+      console.log("Attempting sign up for:", email);
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -138,6 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: "Your account has been created successfully. Please check your email for confirmation.",
       });
     } catch (error: any) {
+      console.error("Sign up error:", error);
       toast({
         variant: "destructive",
         title: "Sign up failed",
@@ -151,14 +169,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      console.log("Attempting sign out");
       setIsLoading(true);
+      // Reset state before calling signOut to avoid potential state issues
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+      
       const { error } = await supabase.auth.signOut();
+      
       if (error) throw error;
+      
       toast({
         title: "Signed out",
         description: "You have been signed out successfully.",
       });
     } catch (error: any) {
+      console.error("Sign out error:", error);
       toast({
         variant: "destructive",
         title: "Sign out failed",

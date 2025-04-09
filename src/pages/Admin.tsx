@@ -13,26 +13,26 @@ const AdminDashboard = () => {
   const { user, isAdmin, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [accessChecked, setAccessChecked] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && (!user || !isAdmin)) {
-      toast({
-        title: "Access Denied",
-        description: "You don't have permission to access the admin dashboard.",
-        variant: "destructive"
-      });
-      navigate('/auth');
+    if (!isLoading) {
+      if (!user || !isAdmin) {
+        toast({
+          title: "Access Denied",
+          description: "You don't have permission to access the admin dashboard.",
+          variant: "destructive"
+        });
+        navigate('/auth');
+      } else if (!accessChecked) {
+        setAccessChecked(true);
+        toast({
+          title: "Welcome to Admin Dashboard",
+          description: "You now have access to manage your spiritual center.",
+        });
+      }
     }
-  }, [user, isAdmin, isLoading, navigate, toast]);
-
-  useEffect(() => {
-    if (user && isAdmin) {
-      toast({
-        title: "Welcome to Admin Dashboard",
-        description: "You now have access to manage your spiritual center.",
-      });
-    }
-  }, [user, isAdmin, toast]);
+  }, [user, isAdmin, isLoading, navigate, toast, accessChecked]);
 
   // Improved loading state with animation
   if (isLoading) {

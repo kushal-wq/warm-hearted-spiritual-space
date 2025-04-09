@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, Search, RefreshCw, Mail, User, Check, X, Clock, UserCheck, UserX } from 'lucide-react';
@@ -68,14 +68,22 @@ const UsersTab = () => {
         
         // Then get user emails
         const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        
         if (authError) {
           console.error("Could not fetch auth users:", authError);
-          return profiles as unknown as Profile[];
+          // Even if we can't fetch emails, return profiles
+          return profiles.map(profile => ({
+            ...profile,
+            email: 'Unknown',
+            is_priest: profile.is_priest || false,
+            priest_status: profile.priest_status || null
+          })) as Profile[];
         }
         
-        // Combine the data
+        // Combine the data with safer null checks
+        const usersArray = authUsers?.users || [];
         const combinedData = profiles.map(profile => {
-          const authUser = (authUsers.users as AuthUser[]).find(u => u.id === profile.id);
+          const authUser = usersArray.find((u: any) => u.id === profile.id);
           return {
             ...profile,
             email: authUser?.email || 'Unknown',
@@ -84,7 +92,7 @@ const UsersTab = () => {
           };
         });
         
-        return combinedData as unknown as Profile[];
+        return combinedData as Profile[];
       } catch (error) {
         console.error("Error fetching profiles:", error);
         return [] as Profile[];
@@ -120,10 +128,7 @@ const UsersTab = () => {
   // Handle priest approval
   const handlePriestApproval = async (userId: string, status: 'approved' | 'rejected') => {
     try {
-      const updateData: { 
-        priest_status: 'approved' | 'rejected'; 
-        is_priest: boolean 
-      } = {
+      const updateData = {
         priest_status: status,
         is_priest: status === 'approved'
       };
@@ -182,6 +187,15 @@ const UsersTab = () => {
     }
   };
 
+  // Force refresh profiles data
+  const handleRefresh = () => {
+    refetchProfiles();
+    toast({
+      title: "Refreshing",
+      description: "Updating user data..."
+    });
+  };
+
   // Filter and sort users based on search term and active tab
   const filteredProfiles = profiles?.filter(profile => {
     // First apply search term filter
@@ -231,7 +245,7 @@ const UsersTab = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={() => refetchProfiles()}
+              onClick={handleRefresh}
               className="text-spiritual-brown dark:text-spiritual-cream"
             >
               <RefreshCw className="h-4 w-4 mr-2" /> Refresh

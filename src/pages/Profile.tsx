@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -120,8 +121,10 @@ const Profile = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigate('/');
+      // Navigate immediately after sign out to prevent race conditions
+      navigate('/', { replace: true });
     } catch (error: any) {
+      console.error("Sign out error:", error);
       toast({
         variant: 'destructive',
         title: 'Sign out failed',
