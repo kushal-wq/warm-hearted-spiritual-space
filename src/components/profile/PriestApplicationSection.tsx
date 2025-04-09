@@ -47,13 +47,13 @@ const PriestApplicationSection = ({ userId, priestStatus, refetchProfile }: Prie
     
     try {
       // Update the user's profile with priest application status
+      const updateData = {
+        priest_status: 'pending' as const,
+      };
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          priest_status: 'pending',
-          // Store application details in additional fields or in a separate priest_applications table
-          // in a real implementation
-        })
+        .update(updateData)
         .eq('id', userId);
         
       if (error) throw error;

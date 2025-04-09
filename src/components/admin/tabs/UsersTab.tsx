@@ -56,31 +56,35 @@ const UsersTab = () => {
   const { data: profiles, isLoading: profilesLoading, refetch: refetchProfiles } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
-      // First get profiles
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('*');
-      
-      if (error) throw error;
-      
-      // Then get user emails
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      if (authError) {
-        console.error("Could not fetch auth users:", authError);
-        return profiles as unknown as Profile[];
+      try {
+        // First get profiles
+        const { data: profiles, error } = await supabase
+          .from('profiles')
+          .select('*');
+        
+        if (error) throw error;
+        
+        // Then get user emails
+        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        if (authError) {
+          console.error("Could not fetch auth users:", authError);
+          return profiles as unknown as Profile[];
+        }
+        
+        // Combine the data
+        const combinedData = profiles.map(profile => {
+          const authUser = (authUsers.users as AuthUser[]).find(u => u.id === profile.id);
+          return {
+            ...profile,
+            email: authUser?.email || 'Unknown'
+          };
+        });
+        
+        return combinedData as unknown as Profile[];
+      } catch (error) {
+        console.error("Error fetching profiles:", error);
+        return [] as Profile[];
       }
-      
-      // Combine the data
-      // Use a type assertion to help TypeScript understand the shape of authUsers.users
-      const combinedData = profiles.map(profile => {
-        const authUser = (authUsers.users as AuthUser[]).find(u => u.id === profile.id);
-        return {
-          ...profile,
-          email: authUser?.email || 'Unknown'
-        };
-      });
-      
-      return combinedData as unknown as Profile[];
     }
   });
 
@@ -112,12 +116,17 @@ const UsersTab = () => {
   // Handle priest approval
   const handlePriestApproval = async (userId: string, status: 'approved' | 'rejected') => {
     try {
+      const updateData: { 
+        priest_status: 'approved' | 'rejected'; 
+        is_priest: boolean 
+      } = {
+        priest_status: status,
+        is_priest: status === 'approved'
+      };
+
       const { error } = await supabase
         .from('profiles')
-        .update({ 
-          priest_status: status,
-          is_priest: status === 'approved' ? true : false 
-        })
+        .update(updateData)
         .eq('id', userId);
 
       if (error) throw error;

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,14 +30,23 @@ const PriestDashboard = () => {
     queryFn: async () => {
       if (!user) return null;
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('is_priest, priest_status')
-        .eq('id', user.id)
-        .single();
-      
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('is_priest, priest_status')
+          .eq('id', user.id)
+          .single();
+        
+        if (error) {
+          console.error("Error fetching priest status:", error);
+          return { is_priest: false, priest_status: null };
+        }
+        
+        return data;
+      } catch (err) {
+        console.error("Error in priest status query:", err);
+        return { is_priest: false, priest_status: null };
+      }
     },
     enabled: !!user,
   });
@@ -89,7 +97,7 @@ const PriestDashboard = () => {
         description: "Manage your rituals, teachings, and schedule.",
       });
       
-      // Show access instructions on first visit (you could use localStorage to track this)
+      // Show access instructions on first visit
       const firstVisit = localStorage.getItem('priest_dashboard_visited') === null;
       if (firstVisit) {
         setShowAccessInstructions(true);
