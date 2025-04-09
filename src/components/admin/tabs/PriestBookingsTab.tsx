@@ -19,6 +19,19 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { PriestBooking } from '@/types/priest';
 
+// Define a type for the joined booking data from the query
+interface BookingWithRelations extends PriestBooking {
+  profiles?: {
+    first_name: string | null;
+    last_name: string | null;
+    email: string | null;
+  } | null;
+  priest_profiles?: {
+    name: string | null;
+    avatar_url: string | null;
+  } | null;
+}
+
 const PriestBookingsTab = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,7 +51,7 @@ const PriestBookingsTab = () => {
         
         if (error) throw error;
         
-        return bookingsData || [];
+        return bookingsData as BookingWithRelations[] || [];
       } catch (error) {
         console.error("Error fetching priest bookings:", error);
         toast({
@@ -84,7 +97,7 @@ const PriestBookingsTab = () => {
   };
 
   // Function to safely get client name
-  const getClientName = (booking: any) => {
+  const getClientName = (booking: BookingWithRelations) => {
     if (booking.profiles && booking.profiles.first_name && booking.profiles.last_name) {
       return `${booking.profiles.first_name} ${booking.profiles.last_name}`;
     }
@@ -152,7 +165,7 @@ const PriestBookingsTab = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredBookings?.map((booking: any) => (
+                  filteredBookings?.map((booking: BookingWithRelations) => (
                     <TableRow 
                       key={booking.id} 
                       className="hover:bg-spiritual-cream/10 dark:hover:bg-gray-800/50 transition-colors duration-150"
