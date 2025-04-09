@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, Search, RefreshCw, Mail, User, Check, X, Clock, UserCheck, UserX } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -49,16 +49,19 @@ interface AuthUser {
 
 const UsersTab = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [dialogType, setDialogType] = useState<'approve' | 'reject' | 'admin' | 'revoke-priest' | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'priests' | 'pending'>('all');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Fetch user profiles with admin status
   const { data: profiles, isLoading: profilesLoading, refetch: refetchProfiles } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
       try {
+        console.log("Fetching profiles data...");
         // First get profiles
         const { data: profiles, error } = await supabase
           .from('profiles')
@@ -66,7 +69,9 @@ const UsersTab = () => {
         
         if (error) throw error;
         
-        // Then get user emails
+        console.log("Profiles data fetched:", profiles);
+        
+        // Then get user emails - note we're using a safer approach without admin API
         const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
         
         if (authError) {
@@ -103,6 +108,7 @@ const UsersTab = () => {
   // Toggle admin status
   const toggleAdminStatus = async (userId: string, currentStatus: boolean) => {
     try {
+      setIsProcessing(true);
       const { error } = await supabase
         .from('profiles')
         .update({ is_admin: !currentStatus })
@@ -115,8 +121,11 @@ const UsersTab = () => {
         description: `Admin status ${!currentStatus ? 'granted' : 'revoked'} successfully`,
       });
       
-      refetchProfiles();
+      await refetchProfiles();
+      setIsProcessing(false);
+      setDialogType(null);
     } catch (error: any) {
+      setIsProcessing(false);
       toast({
         variant: "destructive",
         title: "Error",
@@ -128,6 +137,9 @@ const UsersTab = () => {
   // Handle priest approval
   const handlePriestApproval = async (userId: string, status: 'approved' | 'rejected') => {
     try {
+      setIsProcessing(true);
+      console.log(`Approving priest with ID ${userId}, setting status to: ${status}`);
+      
       const updateData = {
         priest_status: status,
         is_priest: status === 'approved'
@@ -138,16 +150,24 @@ const UsersTab = () => {
         .update(updateData)
         .eq('id', userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating priest status:", error);
+        throw error;
+      }
 
       toast({
         title: "Success",
         description: `Priest application ${status === 'approved' ? 'approved' : 'rejected'} successfully`,
       });
       
+      // Invalidate and refetch to ensure we get fresh data
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      await refetchProfiles();
+      setIsProcessing(false);
       setDialogType(null);
-      refetchProfiles();
     } catch (error: any) {
+      setIsProcessing(false);
+      console.error("Error in handlePriestApproval:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -159,6 +179,7 @@ const UsersTab = () => {
   // Revoke priest status
   const revokePriestStatus = async (userId: string) => {
     try {
+      setIsProcessing(true);
       const updateData = {
         priest_status: null,
         is_priest: false
@@ -176,9 +197,13 @@ const UsersTab = () => {
         description: "Priest status revoked successfully",
       });
       
+      // Invalidate and refetch to ensure we get fresh data
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      await refetchProfiles();
+      setIsProcessing(false);
       setDialogType(null);
-      refetchProfiles();
     } catch (error: any) {
+      setIsProcessing(false);
       toast({
         variant: "destructive",
         title: "Error",
@@ -189,6 +214,7 @@ const UsersTab = () => {
 
   // Force refresh profiles data
   const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['profiles'] });
     refetchProfiles();
     toast({
       title: "Refreshing",
@@ -246,9 +272,11 @@ const UsersTab = () => {
               variant="outline" 
               size="sm" 
               onClick={handleRefresh}
+              disabled={isProcessing || profilesLoading}
               className="text-spiritual-brown dark:text-spiritual-cream"
             >
-              <RefreshCw className="h-4 w-4 mr-2" /> Refresh
+              <RefreshCw className={`h-4 w-4 mr-2 ${(isProcessing || profilesLoading) ? 'animate-spin' : ''}`} />
+              {isProcessing ? 'Processing...' : 'Refresh'}
             </Button>
           </div>
         </div>
@@ -279,10 +307,12 @@ const UsersTab = () => {
       </div>
 
       <CardContent className="p-0">
-        {profilesLoading ? (
+        {profilesLoading || isProcessing ? (
           <div className="py-10 text-center">
             <div className="inline-block rangoli-spinner"></div>
-            <p className="mt-2 text-spiritual-brown/70 dark:text-spiritual-cream/70">Loading users...</p>
+            <p className="mt-2 text-spiritual-brown/70 dark:text-spiritual-cream/70">
+              {isProcessing ? 'Processing request...' : 'Loading users...'}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -377,6 +407,7 @@ const UsersTab = () => {
                             className={profile.is_admin 
                               ? "text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/30" 
                               : "text-spiritual-gold hover:bg-spiritual-gold/10 hover:text-spiritual-gold"}
+                            disabled={isProcessing}
                           >
                             {profile.is_admin ? 'Revoke Admin' : 'Make Admin'}
                           </Button>
@@ -391,6 +422,7 @@ const UsersTab = () => {
                                   setDialogType('approve');
                                 }}
                                 className="text-green-600 hover:bg-green-50 hover:text-green-700"
+                                disabled={isProcessing}
                               >
                                 <Check className="h-4 w-4 mr-1" /> Approve
                               </Button>
@@ -402,6 +434,7 @@ const UsersTab = () => {
                                   setDialogType('reject');
                                 }}
                                 className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                                disabled={isProcessing}
                               >
                                 <X className="h-4 w-4 mr-1" /> Reject
                               </Button>
@@ -417,6 +450,7 @@ const UsersTab = () => {
                                 setDialogType('revoke-priest');
                               }}
                               className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                              disabled={isProcessing}
                             >
                               <UserX className="h-4 w-4 mr-1" /> Revoke Priest
                             </Button>
@@ -433,7 +467,7 @@ const UsersTab = () => {
       </CardContent>
       
       {/* Confirm Admin Status Change Dialog */}
-      <AlertDialog open={dialogType === 'admin' && !!selectedUserId} onOpenChange={() => dialogType === 'admin' && setDialogType(null)}>
+      <AlertDialog open={dialogType === 'admin' && !!selectedUserId} onOpenChange={() => !isProcessing && setDialogType(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -448,26 +482,26 @@ const UsersTab = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDialogType(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => !isProcessing && setDialogType(null)} disabled={isProcessing}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => {
                 if (selectedUserId) {
                   const profile = profiles?.find(p => p.id === selectedUserId);
                   if (profile) {
                     toggleAdminStatus(selectedUserId, profile.is_admin);
-                    setDialogType(null);
                   }
                 }
               }}
+              disabled={isProcessing}
             >
-              Confirm
+              {isProcessing ? 'Processing...' : 'Confirm'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Confirm Priest Approval Dialog */}
-      <AlertDialog open={dialogType === 'approve' && !!selectedUserId} onOpenChange={() => dialogType === 'approve' && setDialogType(null)}>
+      <AlertDialog open={dialogType === 'approve' && !!selectedUserId} onOpenChange={() => !isProcessing && setDialogType(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Approve Priest Request</AlertDialogTitle>
@@ -476,19 +510,20 @@ const UsersTab = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDialogType(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => !isProcessing && setDialogType(null)} disabled={isProcessing}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => selectedUserId && handlePriestApproval(selectedUserId, 'approved')}
               className="bg-green-600 hover:bg-green-700"
+              disabled={isProcessing}
             >
-              Approve
+              {isProcessing ? 'Processing...' : 'Approve'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Confirm Priest Rejection Dialog */}
-      <AlertDialog open={dialogType === 'reject' && !!selectedUserId} onOpenChange={() => dialogType === 'reject' && setDialogType(null)}>
+      <AlertDialog open={dialogType === 'reject' && !!selectedUserId} onOpenChange={() => !isProcessing && setDialogType(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Reject Priest Request</AlertDialogTitle>
@@ -497,19 +532,20 @@ const UsersTab = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDialogType(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => !isProcessing && setDialogType(null)} disabled={isProcessing}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => selectedUserId && handlePriestApproval(selectedUserId, 'rejected')}
               className="bg-red-600 hover:bg-red-700"
+              disabled={isProcessing}
             >
-              Reject
+              {isProcessing ? 'Processing...' : 'Reject'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Confirm Revoke Priest Status Dialog */}
-      <AlertDialog open={dialogType === 'revoke-priest' && !!selectedUserId} onOpenChange={() => dialogType === 'revoke-priest' && setDialogType(null)}>
+      <AlertDialog open={dialogType === 'revoke-priest' && !!selectedUserId} onOpenChange={() => !isProcessing && setDialogType(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Revoke Priest Status</AlertDialogTitle>
@@ -518,12 +554,13 @@ const UsersTab = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDialogType(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => !isProcessing && setDialogType(null)} disabled={isProcessing}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => selectedUserId && revokePriestStatus(selectedUserId)}
               className="bg-red-600 hover:bg-red-700"
+              disabled={isProcessing}
             >
-              Revoke Status
+              {isProcessing ? 'Processing...' : 'Revoke Status'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

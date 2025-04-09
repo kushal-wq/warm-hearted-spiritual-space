@@ -29,16 +29,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("Auth state changed:", event);
-        setSession(session);
-        setUser(session?.user ?? null);
         
-        if (session?.user) {
-          // Use setTimeout to avoid potential recursion issues
-          setTimeout(() => {
-            checkUserAdmin(session.user.id);
-          }, 0);
-        } else {
+        if (event === 'SIGNED_OUT') {
+          // Clear all user data on sign out
+          setSession(null);
+          setUser(null);
           setIsAdmin(false);
+        } else {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            // Use setTimeout to avoid potential recursion issues
+            setTimeout(() => {
+              checkUserAdmin(session.user.id);
+            }, 0);
+          }
         }
       }
     );
@@ -171,14 +177,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log("Attempting sign out");
       setIsLoading(true);
-      // Reset state before calling signOut to avoid potential state issues
-      setUser(null);
-      setSession(null);
-      setIsAdmin(false);
       
       const { error } = await supabase.auth.signOut();
       
       if (error) throw error;
+      
+      // Clear state after successful sign out
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
       
       toast({
         title: "Signed out",
