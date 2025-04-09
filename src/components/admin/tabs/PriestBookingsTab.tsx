@@ -19,14 +19,14 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { PriestBooking } from '@/types/priest';
 
-// Define a type for the joined booking data from the query
-interface BookingWithRelations extends PriestBooking {
-  profiles?: {
+// Define a type that accounts for potential Supabase query errors
+interface BookingWithRelations extends Omit<PriestBooking, 'profiles' | 'priest_profiles'> {
+  profiles: {
     first_name: string | null;
     last_name: string | null;
     email: string | null;
-  } | null;
-  priest_profiles?: {
+  } | null | { error: true };
+  priest_profiles: {
     name: string | null;
     avatar_url: string | null;
   } | null;
@@ -51,7 +51,8 @@ const PriestBookingsTab = () => {
         
         if (error) throw error;
         
-        return bookingsData as BookingWithRelations[] || [];
+        // Cast safely after ensuring no error
+        return (bookingsData || []) as unknown as BookingWithRelations[];
       } catch (error) {
         console.error("Error fetching priest bookings:", error);
         toast({
@@ -67,10 +68,20 @@ const PriestBookingsTab = () => {
   // Filter bookings based on search term
   const filteredBookings = searchTerm 
     ? bookings?.filter(booking => {
-        // Safely access potentially undefined nested properties
-        const firstName = booking.profiles?.first_name || '';
-        const lastName = booking.profiles?.last_name || '';
-        const priestName = booking.priest_profiles?.name || '';
+        // Safely access potentially undefined or error nested properties
+        let firstName = '';
+        let lastName = '';
+        let priestName = '';
+        
+        // Check if profiles is an object and doesn't have an error property
+        if (booking.profiles && typeof booking.profiles === 'object' && !('error' in booking.profiles)) {
+          firstName = booking.profiles?.first_name || '';
+          lastName = booking.profiles?.last_name || '';
+        }
+        
+        if (booking.priest_profiles && typeof booking.priest_profiles === 'object') {
+          priestName = booking.priest_profiles?.name || '';
+        }
         
         return firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
           lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -98,7 +109,9 @@ const PriestBookingsTab = () => {
 
   // Function to safely get client name
   const getClientName = (booking: BookingWithRelations) => {
-    if (booking.profiles && booking.profiles.first_name && booking.profiles.last_name) {
+    // Check if profiles is an object and doesn't have an error property
+    if (booking.profiles && typeof booking.profiles === 'object' && !('error' in booking.profiles) && 
+        booking.profiles.first_name && booking.profiles.last_name) {
       return `${booking.profiles.first_name} ${booking.profiles.last_name}`;
     }
     return 'Unknown User';
