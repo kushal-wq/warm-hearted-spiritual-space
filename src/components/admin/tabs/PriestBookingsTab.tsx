@@ -54,9 +54,9 @@ const PriestBookingsTab = () => {
   // Filter bookings based on search term
   const filteredBookings = searchTerm 
     ? bookings?.filter(booking => 
-        booking.profiles?.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        booking.profiles?.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.priest_profiles?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (booking.profiles?.first_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (booking.profiles?.last_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (booking.priest_profiles?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         booking.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
         booking.address.toLowerCase().includes(searchTerm.toLowerCase())
       )
@@ -76,6 +76,14 @@ const PriestBookingsTab = () => {
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
+  };
+
+  // Function to safely get client name
+  const getClientName = (booking: any) => {
+    if (booking.profiles && booking.profiles.first_name && booking.profiles.last_name) {
+      return `${booking.profiles.first_name} ${booking.profiles.last_name}`;
+    }
+    return 'Unknown User';
   };
 
   return (
@@ -148,9 +156,7 @@ const PriestBookingsTab = () => {
                         {booking.booking_date ? format(new Date(booking.booking_date), 'MMM d, yyyy h:mm a') : 'N/A'}
                       </TableCell>
                       <TableCell>
-                        {booking.profiles?.first_name && booking.profiles?.last_name 
-                          ? `${booking.profiles.first_name} ${booking.profiles.last_name}`
-                          : 'Unknown User'}
+                        {getClientName(booking)}
                       </TableCell>
                       <TableCell>
                         {booking.priest_profiles?.name || 'Unknown Priest'}
