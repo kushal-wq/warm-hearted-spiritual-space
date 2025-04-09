@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Shield, Search, RefreshCw, Mail, User, Check, X, Clock, UserCheck } from 'lucide-react';
+import { Shield, Search, RefreshCw, Mail, User, Check, X, Clock, UserCheck, UserX } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -50,7 +51,7 @@ const UsersTab = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [dialogType, setDialogType] = useState<'approve' | 'reject' | 'admin' | null>(null);
+  const [dialogType, setDialogType] = useState<'approve' | 'reject' | 'admin' | 'revoke-priest' | null>(null);
   const [activeTab, setActiveTab] = useState<'all' | 'priests' | 'pending'>('all');
 
   // Fetch user profiles with admin status
@@ -150,6 +151,37 @@ const UsersTab = () => {
     }
   };
 
+  // Revoke priest status
+  const revokePriestStatus = async (userId: string) => {
+    try {
+      const updateData = {
+        priest_status: null,
+        is_priest: false
+      };
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Priest status revoked successfully",
+      });
+      
+      setDialogType(null);
+      refetchProfiles();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to revoke priest status",
+      });
+    }
+  };
+
   // Filter and sort users based on search term and active tab
   const filteredProfiles = profiles?.filter(profile => {
     // First apply search term filter
@@ -162,7 +194,7 @@ const UsersTab = () => {
     // Then apply tab filter
     switch (activeTab) {
       case 'priests':
-        return matchesSearch && profile.is_priest;
+        return matchesSearch && profile.is_priest === true;
       case 'pending':
         return matchesSearch && profile.priest_status === 'pending';
       default:
@@ -172,6 +204,8 @@ const UsersTab = () => {
 
   // Count pending priest applications
   const pendingCount = profiles?.filter(p => p.priest_status === 'pending').length || 0;
+  // Count approved priests
+  const priestsCount = profiles?.filter(p => p.is_priest === true).length || 0;
 
   return (
     <Card className="shadow-sm hover:shadow-md transition-all duration-300">
@@ -210,8 +244,13 @@ const UsersTab = () => {
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'all' | 'priests' | 'pending')}>
           <TabsList className="grid grid-cols-3 max-w-md">
             <TabsTrigger value="all">All Users</TabsTrigger>
-            <TabsTrigger value="priests">
+            <TabsTrigger value="priests" className="relative">
               Priests
+              {priestsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                  {priestsCount}
+                </span>
+              )}
             </TabsTrigger>
             <TabsTrigger value="pending" className="relative">
               Pending
@@ -257,6 +296,7 @@ const UsersTab = () => {
                       className={`
                         hover:bg-spiritual-cream/10 dark:hover:bg-gray-800/50 transition-colors duration-150
                         ${profile.priest_status === 'pending' ? 'bg-amber-50/30 dark:bg-amber-900/10' : ''}
+                        ${profile.is_priest ? 'bg-green-50/30 dark:bg-green-900/10' : ''}
                       `}
                     >
                       <TableCell className="font-medium">
@@ -291,7 +331,7 @@ const UsersTab = () => {
                             </Badge>
                           )}
                           
-                          {profile.priest_status === 'approved' && (
+                          {profile.is_priest && (
                             <Badge 
                               variant="outline" 
                               className="bg-green-50 text-green-700 border-green-200 flex items-center"
@@ -301,7 +341,7 @@ const UsersTab = () => {
                             </Badge>
                           )}
                           
-                          {(!profile.is_admin && !profile.priest_status) && (
+                          {(!profile.is_admin && !profile.is_priest && !profile.priest_status) && (
                             <Badge 
                               variant="outline" 
                               className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
@@ -352,6 +392,20 @@ const UsersTab = () => {
                                 <X className="h-4 w-4 mr-1" /> Reject
                               </Button>
                             </>
+                          )}
+
+                          {profile.is_priest && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedUserId(profile.id);
+                                setDialogType('revoke-priest');
+                              }}
+                              className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                            >
+                              <UserX className="h-4 w-4 mr-1" /> Revoke Priest
+                            </Button>
                           )}
                         </div>
                       </TableCell>
@@ -435,6 +489,27 @@ const UsersTab = () => {
               className="bg-red-600 hover:bg-red-700"
             >
               Reject
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm Revoke Priest Status Dialog */}
+      <AlertDialog open={dialogType === 'revoke-priest' && !!selectedUserId} onOpenChange={() => dialogType === 'revoke-priest' && setDialogType(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke Priest Status</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to revoke priest status from this user? They will lose access to the priest dashboard and functionality.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDialogType(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => selectedUserId && revokePriestStatus(selectedUserId)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Revoke Status
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
