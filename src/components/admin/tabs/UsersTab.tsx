@@ -35,6 +35,9 @@ interface Profile {
   is_priest: boolean;
   priest_status: 'pending' | 'approved' | 'rejected' | null;
   email?: string;
+  avatar_url?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Define an interface for the auth user structure
@@ -64,7 +67,7 @@ const UsersTab = () => {
       const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
       if (authError) {
         console.error("Could not fetch auth users:", authError);
-        return profiles as Profile[];
+        return profiles as unknown as Profile[];
       }
       
       // Combine the data
@@ -77,7 +80,7 @@ const UsersTab = () => {
         };
       });
       
-      return combinedData as Profile[];
+      return combinedData as unknown as Profile[];
     }
   });
 

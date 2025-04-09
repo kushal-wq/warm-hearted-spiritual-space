@@ -46,6 +46,8 @@ export interface Profile {
   last_name?: string;
   avatar_url?: string;
   is_admin?: boolean;
+  is_priest?: boolean;
+  priest_status?: 'pending' | 'approved' | 'rejected' | null;
   created_at: string;
   updated_at: string;
 }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,16 +26,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Loader2, UserCircle, LogOut, Shield } from 'lucide-react';
 import PriestApplicationSection from '@/components/profile/PriestApplicationSection';
-
-interface UserProfile {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  avatar_url: string | null;
-  is_admin: boolean;
-  is_priest: boolean;
-  priest_status: 'pending' | 'approved' | 'rejected' | null;
-}
+import { UserProfile } from '@/types/priest';
 
 const Profile = () => {
   const { user, isLoading: authLoading, signOut } = useAuth();
@@ -63,7 +53,7 @@ const Profile = () => {
       
       if (error) throw error;
       
-      return data as UserProfile;
+      return data as unknown as UserProfile;
     },
     enabled: !!user,
   });

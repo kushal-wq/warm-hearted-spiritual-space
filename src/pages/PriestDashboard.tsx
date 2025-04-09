@@ -61,7 +61,7 @@ const PriestDashboard = () => {
         toast({
           title: "Approval Pending",
           description: "Your priest account is pending approval by an administrator.",
-          variant: "warning"
+          variant: "default"
         });
         navigate('/profile');
       } else if (priestStatus.priest_status === 'rejected') {

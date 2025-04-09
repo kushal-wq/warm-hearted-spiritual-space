@@ -1,3 +1,4 @@
+
 export interface PriestProfile {
   id?: string;
   user_id: string;
@@ -35,6 +36,8 @@ export interface UserProfile {
   is_admin: boolean;
   avatar_url?: string | null;
   email?: string;
-  is_priest?: boolean;
-  priest_status?: 'pending' | 'approved' | 'rejected' | null;
+  is_priest: boolean;
+  priest_status: 'pending' | 'approved' | 'rejected' | null;
+  created_at?: string;
+  updated_at?: string;
 }
