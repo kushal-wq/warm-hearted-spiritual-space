@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,8 +27,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserProfile } from '@/types/priest';
+import { PriestAPI } from '@/api/supabaseUtils';
 
-// Define an interface for the auth user structure
 interface AuthUser {
   id: string;
   email?: string;
@@ -44,13 +43,11 @@ const UsersTab = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'priests' | 'pending'>('all');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Fetch user profiles with admin status
   const { data: profiles, isLoading: profilesLoading, refetch: refetchProfiles } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
       try {
         console.log("Fetching profiles data...");
-        // First get profiles
         const { data: profiles, error } = await supabase
           .from('profiles')
           .select('*');
@@ -59,11 +56,8 @@ const UsersTab = () => {
         
         console.log("Profiles data fetched:", profiles);
         
-        // Then get user emails - we'll use admin API for this
-        // Since we can't directly query auth.users, we'll work with what we have
         const profilesWithEmails = await Promise.all(profiles.map(async (profile) => {
           try {
-            // Try to get the user's email from auth if possible
             const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(profile.id);
             
             if (userError || !user) {
@@ -107,7 +101,6 @@ const UsersTab = () => {
     }
   });
 
-  // Toggle admin status
   const toggleAdminStatus = async (userId: string, currentStatus: boolean) => {
     try {
       setIsProcessing(true);
@@ -123,7 +116,6 @@ const UsersTab = () => {
         description: `Admin status ${!currentStatus ? 'granted' : 'revoked'} successfully`,
       });
       
-      // Invalidate all queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
       await refetchProfiles();
       setIsProcessing(false);
@@ -138,13 +130,11 @@ const UsersTab = () => {
     }
   };
 
-  // Handle priest approval
   const handlePriestApproval = async (userId: string, status: 'approved' | 'rejected') => {
     try {
       setIsProcessing(true);
       console.log(`Approving priest with ID ${userId}, setting status to: ${status}`);
       
-      // Step 1: Update the user's profile status
       const updateData = {
         priest_status: status,
         is_priest: status === 'approved'
@@ -160,48 +150,43 @@ const UsersTab = () => {
         throw error;
       }
 
-      // Step 2: Only create priest profile if approving
       if (status === 'approved') {
         console.log("Creating priest profile for approved user");
         
-        // Get user profile data
-        const { data: userProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('first_name, last_name')
-          .eq('id', userId)
-          .single();
-        
-        if (profileError) {
-          console.error("Error fetching user profile:", profileError);
-          throw profileError;
-        }
-        
-        console.log("User profile fetched:", userProfile);
-        
-        if (userProfile) {
-          // Check if priest profile already exists to avoid duplicates
+        try {
+          const { data: userProfile, error: profileError } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', userId)
+            .single();
+          
+          if (profileError) {
+            console.error("Error fetching user profile:", profileError);
+            throw profileError;
+          }
+          
+          console.log("User profile fetched:", userProfile);
+          
           const { data: existingProfile, error: existingError } = await supabase
             .from('priest_profiles')
             .select('id')
             .eq('user_id', userId)
             .maybeSingle();
-            
+              
           if (existingError) {
             console.error("Error checking existing priest profile:", existingError);
             throw existingError;
           }
           
           console.log("Existing profile check result:", existingProfile);
-            
+              
           if (!existingProfile) {
             console.log("No existing profile found, creating new priest profile");
             
-            // Create initial priest profile
-            const { data: newProfile, error: priestError } = await supabase
-              .from('priest_profiles')
-              .insert({
+            try {
+              const priestProfile = await PriestAPI.createProfile({
                 user_id: userId,
-                name: `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() || 'New Priest',
+                name: `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim() || 'New Priest',
                 description: 'Experienced priest specializing in traditional ceremonies.',
                 specialties: ['Traditional Rituals', 'Meditation'],
                 experience_years: 1,
@@ -209,29 +194,27 @@ const UsersTab = () => {
                 avatar_url: '/placeholder.svg',
                 availability: 'Weekends and evenings',
                 location: 'Delhi'
-              })
-              .select()
-              .single();
+              });
               
-            if (priestError) {
-              console.error("Error creating priest profile:", priestError);
-              throw priestError;
+              console.log("New priest profile created successfully:", priestProfile);
+            } catch (createError: any) {
+              console.error("Error in PriestAPI.createProfile:", createError);
+              throw new Error(`Failed to create priest profile: ${createError.message}`);
             }
-            
-            console.log("New priest profile created:", newProfile);
           } else {
             console.log("Priest profile already exists, skipping creation");
           }
+        } catch (profileStepError: any) {
+          console.error("Error in profile creation step:", profileStepError);
+          throw profileStepError;
         }
       }
 
-      // Step 3: Show success notification
       toast({
         title: "Success",
         description: `Priest application ${status === 'approved' ? 'approved' : 'rejected'} successfully`,
       });
       
-      // Step 4: Invalidate and refetch queries to update UI
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['profiles'] }),
         queryClient.invalidateQueries({ queryKey: ['priest-status'] }),
@@ -253,7 +236,6 @@ const UsersTab = () => {
     }
   };
 
-  // Revoke priest status
   const revokePriestStatus = async (userId: string) => {
     try {
       setIsProcessing(true);
@@ -274,7 +256,6 @@ const UsersTab = () => {
         description: "Priest status revoked successfully",
       });
       
-      // Invalidate and refetch to ensure we get fresh data
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
       await refetchProfiles();
       setIsProcessing(false);
@@ -289,7 +270,6 @@ const UsersTab = () => {
     }
   };
 
-  // Force refresh profiles data
   const handleRefresh = () => {
     setIsProcessing(true);
     queryClient.invalidateQueries({ queryKey: ['profiles'] });
@@ -302,16 +282,13 @@ const UsersTab = () => {
     });
   };
 
-  // Filter and sort users based on search term and active tab
   const filteredProfiles = profiles?.filter(profile => {
-    // First apply search term filter
     const matchesSearch = searchTerm 
       ? (profile.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
          profile.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
          profile.email?.toLowerCase().includes(searchTerm.toLowerCase()))
       : true;
     
-    // Then apply tab filter
     switch (activeTab) {
       case 'priests':
         return matchesSearch && profile.is_priest === true;
@@ -322,9 +299,7 @@ const UsersTab = () => {
     }
   });
 
-  // Count pending priest applications
   const pendingCount = profiles?.filter(p => p.priest_status === 'pending').length || 0;
-  // Count approved priests
   const priestsCount = profiles?.filter(p => p.is_priest === true).length || 0;
 
   return (
@@ -546,7 +521,6 @@ const UsersTab = () => {
         )}
       </CardContent>
       
-      {/* Confirm Admin Status Change Dialog */}
       <AlertDialog open={dialogType === 'admin' && !!selectedUserId} onOpenChange={() => !isProcessing && setDialogType(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -580,7 +554,6 @@ const UsersTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Confirm Priest Approval Dialog */}
       <AlertDialog open={dialogType === 'approve' && !!selectedUserId} onOpenChange={() => !isProcessing && setDialogType(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -602,7 +575,6 @@ const UsersTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Confirm Priest Rejection Dialog */}
       <AlertDialog open={dialogType === 'reject' && !!selectedUserId} onOpenChange={() => !isProcessing && setDialogType(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -624,7 +596,6 @@ const UsersTab = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Confirm Revoke Priest Status Dialog */}
       <AlertDialog open={dialogType === 'revoke-priest' && !!selectedUserId} onOpenChange={() => !isProcessing && setDialogType(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

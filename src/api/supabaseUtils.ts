@@ -1,6 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
+import { PriestProfile } from '@/types/priest';
 
 // Types
 export type EventRegistration = {
@@ -605,6 +605,59 @@ export const ProfileAPI = {
       return true;
     } catch (error) {
       console.error('Error updating user profile:', error);
+      return false;
+    }
+  }
+};
+
+// Priest Profile Operations
+export const PriestAPI = {
+  getProfile: async (userId: string): Promise<PriestProfile | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('priest_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+        
+      if (error) throw error;
+      return data as unknown as PriestProfile;
+    } catch (error) {
+      console.error(`Error fetching priest profile for user ${userId}:`, error);
+      return null;
+    }
+  },
+  
+  createProfile: async (profile: Omit<PriestProfile, 'id' | 'created_at' | 'updated_at'>): Promise<PriestProfile | null> => {
+    try {
+      console.log("Creating priest profile with data:", profile);
+      
+      const { data, error } = await supabase
+        .from('priest_profiles')
+        .insert(profile)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      console.log("Created priest profile:", data);
+      return data as unknown as PriestProfile;
+    } catch (error) {
+      console.error("Error creating priest profile:", error);
+      throw error;
+    }
+  },
+  
+  updateProfile: async (id: string, updates: Partial<PriestProfile>): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('priest_profiles')
+        .update(updates)
+        .eq('id', id);
+        
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error(`Error updating priest profile with ID ${id}:`, error);
       return false;
     }
   }
