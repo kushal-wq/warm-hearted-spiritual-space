@@ -628,20 +628,50 @@ export const PriestAPI = {
     }
   },
   
+  getAllProfiles: async (): Promise<PriestProfile[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('priest_profiles')
+        .select('*');
+        
+      if (error) throw error;
+      return data as unknown as PriestProfile[] || [];
+    } catch (error) {
+      console.error('Error fetching all priest profiles:', error);
+      return [];
+    }
+  },
+  
   createProfile: async (profile: Omit<PriestProfile, 'id' | 'created_at' | 'updated_at'>): Promise<PriestProfile | null> => {
     try {
       console.log("Creating priest profile with data:", profile);
       
+      // Ensure all required fields are present
+      const completeProfile = {
+        user_id: profile.user_id,
+        name: profile.name || 'New Priest',
+        description: profile.description || 'Experienced priest specializing in traditional ceremonies.',
+        specialties: profile.specialties || ['Traditional Rituals'],
+        experience_years: profile.experience_years || 1,
+        base_price: profile.base_price || 100,
+        avatar_url: profile.avatar_url || '/placeholder.svg',
+        availability: profile.availability || 'Weekends and evenings',
+        location: profile.location || 'Delhi'
+      };
+      
       const { data, error } = await supabase
         .from('priest_profiles')
-        .insert(profile)
+        .insert(completeProfile)
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error in createProfile:", error);
+        throw error;
+      }
       console.log("Created priest profile:", data);
       return data as unknown as PriestProfile;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating priest profile:", error);
       throw error;
     }

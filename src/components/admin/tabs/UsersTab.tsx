@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Shield, Search, RefreshCw, Mail, User, Check, X, Clock, UserCheck, UserX } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs as UITabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserProfile } from '@/types/priest';
 import { PriestAPI } from '@/api/supabaseUtils';
 
@@ -140,14 +140,14 @@ const UsersTab = () => {
         is_priest: status === 'approved'
       };
 
-      const { error } = await supabase
+      const { error: profileUpdateError } = await supabase
         .from('profiles')
         .update(updateData)
         .eq('id', userId);
 
-      if (error) {
-        console.error("Error updating priest status:", error);
-        throw error;
+      if (profileUpdateError) {
+        console.error("Error updating priest status:", profileUpdateError);
+        throw profileUpdateError;
       }
 
       if (status === 'approved') {
@@ -183,29 +183,45 @@ const UsersTab = () => {
           if (!existingProfile) {
             console.log("No existing profile found, creating new priest profile");
             
-            try {
-              const priestProfile = await PriestAPI.createProfile({
-                user_id: userId,
-                name: `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim() || 'New Priest',
-                description: 'Experienced priest specializing in traditional ceremonies.',
-                specialties: ['Traditional Rituals', 'Meditation'],
-                experience_years: 1,
-                base_price: 100,
-                avatar_url: '/placeholder.svg',
-                availability: 'Weekends and evenings',
-                location: 'Delhi'
-              });
-              
-              console.log("New priest profile created successfully:", priestProfile);
-            } catch (createError: any) {
-              console.error("Error in PriestAPI.createProfile:", createError);
-              throw new Error(`Failed to create priest profile: ${createError.message}`);
+            const priestProfileData = {
+              user_id: userId,
+              name: `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim() || 'New Priest',
+              description: 'Experienced priest specializing in traditional ceremonies.',
+              specialties: ['Traditional Rituals', 'Meditation'],
+              experience_years: 1,
+              base_price: 100,
+              avatar_url: '/placeholder.svg',
+              availability: 'Weekends and evenings',
+              location: 'Delhi'
+            };
+            
+            console.log("Creating priest profile with data:", priestProfileData);
+            
+            const { data: newProfile, error: insertError } = await supabase
+              .from('priest_profiles')
+              .insert(priestProfileData)
+              .select('*')
+              .single();
+            
+            if (insertError) {
+              console.error("Failed to create priest profile:", insertError);
+              throw insertError;
             }
+            
+            console.log("New priest profile created successfully:", newProfile);
           } else {
             console.log("Priest profile already exists, skipping creation");
           }
         } catch (profileStepError: any) {
           console.error("Error in profile creation step:", profileStepError);
+          await supabase
+            .from('profiles')
+            .update({ 
+              priest_status: 'pending',
+              is_priest: false
+            })
+            .eq('id', userId);
+            
           throw profileStepError;
         }
       }
@@ -239,14 +255,9 @@ const UsersTab = () => {
   const revokePriestStatus = async (userId: string) => {
     try {
       setIsProcessing(true);
-      const updateData = {
-        priest_status: null,
-        is_priest: false
-      };
-
       const { error } = await supabase
         .from('profiles')
-        .update(updateData)
+        .update({ priest_status: null, is_priest: false })
         .eq('id', userId);
 
       if (error) throw error;
