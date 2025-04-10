@@ -144,6 +144,7 @@ const UsersTab = () => {
       setIsProcessing(true);
       console.log(`Approving priest with ID ${userId}, setting status to: ${status}`);
       
+      // Step 1: Update the user's profile status
       const updateData = {
         priest_status: status,
         is_priest: status === 'approved'
@@ -159,26 +160,44 @@ const UsersTab = () => {
         throw error;
       }
 
-      // Only create priest profile if approving
+      // Step 2: Only create priest profile if approving
       if (status === 'approved') {
-        // Check if user profile exists
-        const { data: userProfile } = await supabase
+        console.log("Creating priest profile for approved user");
+        
+        // Get user profile data
+        const { data: userProfile, error: profileError } = await supabase
           .from('profiles')
           .select('first_name, last_name')
           .eq('id', userId)
           .single();
         
+        if (profileError) {
+          console.error("Error fetching user profile:", profileError);
+          throw profileError;
+        }
+        
+        console.log("User profile fetched:", userProfile);
+        
         if (userProfile) {
-          // Check if priest profile already exists
-          const { data: existingProfile } = await supabase
+          // Check if priest profile already exists to avoid duplicates
+          const { data: existingProfile, error: existingError } = await supabase
             .from('priest_profiles')
             .select('id')
             .eq('user_id', userId)
             .maybeSingle();
             
+          if (existingError) {
+            console.error("Error checking existing priest profile:", existingError);
+            throw existingError;
+          }
+          
+          console.log("Existing profile check result:", existingProfile);
+            
           if (!existingProfile) {
+            console.log("No existing profile found, creating new priest profile");
+            
             // Create initial priest profile
-            const { error: priestError } = await supabase
+            const { data: newProfile, error: priestError } = await supabase
               .from('priest_profiles')
               .insert({
                 user_id: userId,
@@ -186,37 +205,46 @@ const UsersTab = () => {
                 description: 'Experienced priest specializing in traditional ceremonies.',
                 specialties: ['Traditional Rituals', 'Meditation'],
                 experience_years: 1,
-                base_price: 100, // Added base price
-                avatar_url: '/placeholder.svg', // Added avatar URL
-                availability: 'Weekends and evenings', // Added availability
+                base_price: 100,
+                avatar_url: '/placeholder.svg',
+                availability: 'Weekends and evenings',
                 location: 'Delhi'
-              });
+              })
+              .select()
+              .single();
               
             if (priestError) {
               console.error("Error creating priest profile:", priestError);
-              // Continue with the approval process even if profile creation fails
-              // The priest can complete their profile later
+              throw priestError;
             }
+            
+            console.log("New priest profile created:", newProfile);
+          } else {
+            console.log("Priest profile already exists, skipping creation");
           }
         }
       }
 
+      // Step 3: Show success notification
       toast({
         title: "Success",
         description: `Priest application ${status === 'approved' ? 'approved' : 'rejected'} successfully`,
       });
       
-      // Invalidate and refetch to ensure we get fresh data
-      queryClient.invalidateQueries({ queryKey: ['profiles'] });
-      queryClient.invalidateQueries({ queryKey: ['priest-status'] });
-      queryClient.invalidateQueries({ queryKey: ['priest-profile'] });
-      queryClient.invalidateQueries({ queryKey: ['priest-bookings'] });
+      // Step 4: Invalidate and refetch queries to update UI
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['profiles'] }),
+        queryClient.invalidateQueries({ queryKey: ['priest-status'] }),
+        queryClient.invalidateQueries({ queryKey: ['priest-profile'] }),
+        queryClient.invalidateQueries({ queryKey: ['priest-bookings'] })
+      ]);
+      
       await refetchProfiles();
       setIsProcessing(false);
       setDialogType(null);
     } catch (error: any) {
-      setIsProcessing(false);
       console.error("Error in handlePriestApproval:", error);
+      setIsProcessing(false);
       toast({
         variant: "destructive",
         title: "Error",
