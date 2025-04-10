@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +17,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { PriestBooking } from '@/types/priest';
 import { 
   Dialog, 
   DialogContent, 
@@ -146,7 +148,8 @@ const PriestDashboard = () => {
         }
         
         console.log("Priest bookings result:", data);
-        return data || [];
+        // Cast the data to PriestBooking[] to satisfy TypeScript
+        return (data || []) as PriestBooking[];
       } catch (err) {
         console.error("Error in priest bookings query:", err);
         return [];
