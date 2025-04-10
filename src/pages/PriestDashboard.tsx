@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, HelpCircle } from 'lucide-react';
+import { Loader2, HelpCircle, RefreshCw } from 'lucide-react';
 import PriestLayout from '@/components/priest/PriestLayout';
 import PriestSchedule from '@/components/priest/PriestSchedule';
 import PriestRituals from '@/components/priest/PriestRituals';
@@ -331,16 +331,29 @@ const PriestDashboard = () => {
         )}
       
         {/* Priest dashboard overview */}
-        <PriestDashboardCards setActiveTab={setActiveTab} bookings={priestBookings} />
+        <PriestDashboardCards 
+          setActiveTab={setActiveTab} 
+          bookings={priestBookings || []} 
+        />
         
         {/* Selected tab content */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <PriestTabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
           
-          {activeTab === 'schedule' && <PriestSchedule bookings={priestBookings} priestProfile={priestProfile} />}
+          {activeTab === 'schedule' && (
+            <PriestSchedule 
+              bookings={priestBookings || []} 
+              priestProfile={priestProfile} 
+            />
+          )}
           {activeTab === 'rituals' && <PriestRituals />}
           {activeTab === 'teachings' && <PriestTeachings />}
-          {activeTab === 'profile' && <PriestProfile priestProfile={priestProfile} onProfileUpdated={refreshPriestData} />}
+          {activeTab === 'profile' && (
+            <PriestProfile 
+              priestProfile={priestProfile} 
+              onProfileUpdated={refreshPriestData} 
+            />
+          )}
         </div>
       </div>
 

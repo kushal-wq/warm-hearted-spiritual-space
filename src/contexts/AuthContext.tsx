@@ -229,8 +229,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: "You have been signed out successfully.",
       });
       
-      // Force reload the page after sign out to clear any lingering state
+      // Redirect to home page after sign out without forcing a page reload
+      // This allows React Router to handle the navigation
       window.location.href = '/';
+      
     } catch (error: any) {
       console.error("Sign out error:", error);
       toast({

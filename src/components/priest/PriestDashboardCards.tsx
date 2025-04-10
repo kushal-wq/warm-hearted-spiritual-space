@@ -5,36 +5,33 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarIcon, Book, Clock, Settings, Users, BookOpen } from 'lucide-react';
 
-// Sample schedule data
-const upcomingEvents = [
-  {
-    id: "1",
-    title: "Morning Puja",
-    date: "2025-04-07",
-    time: "6:00 AM - 7:30 AM", 
-    location: "Main Temple Hall"
-  },
-  {
-    id: "2",
-    title: "Vedic Chanting Session",
-    date: "2025-04-07", 
-    time: "10:00 AM - 11:30 AM",
-    location: "Meditation Room"
-  },
-  {
-    id: "3", 
-    title: "Private Ceremony",
-    date: "2025-04-08",
-    time: "4:00 PM - 6:00 PM",
-    location: "Family Residence, Sector 23"
-  }
-];
+type PriestBooking = {
+  id: string;
+  user_id: string;
+  priest_id: string;
+  booking_date: string;
+  price: number;
+  purpose: string;
+  address: string;
+  status: string;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  profiles?: any;
+};
 
 interface PriestDashboardCardsProps {
   setActiveTab: (tab: 'schedule' | 'rituals' | 'teachings' | 'profile') => void;
+  bookings: PriestBooking[];
 }
 
-const PriestDashboardCards = ({ setActiveTab }: PriestDashboardCardsProps) => {
+const PriestDashboardCards = ({ setActiveTab, bookings }: PriestDashboardCardsProps) => {
+  // Get today's bookings
+  const today = new Date().toISOString().split('T')[0];
+  const todaysBookings = bookings
+    .filter(booking => booking.booking_date.startsWith(today))
+    .slice(0, 2);
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <Card>
@@ -45,20 +42,24 @@ const PriestDashboardCards = ({ setActiveTab }: PriestDashboardCardsProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
-          <ul className="space-y-4">
-            {upcomingEvents.slice(0, 2).map((event) => (
-              <li key={event.id} className="border-b pb-2 last:border-0">
-                <p className="font-medium">{event.title}</p>
-                <div className="flex items-center text-sm text-muted-foreground mt-1">
-                  <Clock className="h-4 w-4 mr-1" />
-                  {event.time}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {event.location}
-                </div>
-              </li>
-            ))}
-          </ul>
+          {todaysBookings.length > 0 ? (
+            <ul className="space-y-4">
+              {todaysBookings.map((booking) => (
+                <li key={booking.id} className="border-b pb-2 last:border-0">
+                  <p className="font-medium">{booking.purpose}</p>
+                  <div className="flex items-center text-sm text-muted-foreground mt-1">
+                    <Clock className="h-4 w-4 mr-1" />
+                    {new Date(booking.booking_date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {booking.address}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-muted-foreground">No bookings scheduled for today.</p>
+          )}
         </CardContent>
         <CardFooter>
           <Button variant="outline" className="w-full text-spiritual-gold" onClick={() => setActiveTab('schedule')}>
