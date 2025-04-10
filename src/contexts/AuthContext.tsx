@@ -25,44 +25,79 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
+    let mounted = true;
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log("Auth state changed:", event);
+        
+        if (!mounted) return;
         
         if (event === 'SIGNED_OUT') {
           // Clear all user data on sign out
           setSession(null);
           setUser(null);
           setIsAdmin(false);
-        } else {
+        } else if (session) {
           setSession(session);
-          setUser(session?.user ?? null);
+          setUser(session.user);
           
-          if (session?.user) {
-            // Use setTimeout to avoid potential recursion issues
-            setTimeout(() => {
-              checkUserAdmin(session.user.id);
-            }, 0);
+          // Check admin status if signed in
+          if (session.user) {
+            try {
+              await checkUserAdmin(session.user.id);
+            } catch (error) {
+              console.error("Error checking admin status:", error);
+            }
           }
         }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session ? "Has session" : "No session");
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        checkUserAdmin(session.user.id);
+    const initializeAuth = async () => {
+      try {
+        console.log("Initializing auth...");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          if (mounted) {
+            setIsLoading(false);
+          }
+          return;
+        }
+        
+        console.log("Initial session check:", session ? "Has session" : "No session");
+        
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            try {
+              await checkUserAdmin(session.user.id);
+            } catch (error) {
+              console.error("Error checking admin status:", error);
+            }
+          }
+          
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Unexpected error in auth initialization:", error);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
-      setIsLoading(false);
-    });
+    };
+    
+    initializeAuth();
 
     return () => {
       console.log("Cleaning up auth subscription");
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -78,6 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) {
         console.error('Error checking admin status:', error);
+        setIsAdmin(false);
         return;
       }
       
@@ -178,19 +214,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("Attempting sign out");
       setIsLoading(true);
       
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) throw error;
-      
-      // Clear state after successful sign out
+      // First clear state to prevent UI flashing
       setUser(null);
       setSession(null);
       setIsAdmin(false);
+      
+      // Then sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
       
       toast({
         title: "Signed out",
         description: "You have been signed out successfully.",
       });
+      
+      // Force reload the page after sign out to clear any lingering state
+      window.location.href = '/';
     } catch (error: any) {
       console.error("Sign out error:", error);
       toast({
@@ -198,6 +238,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Sign out failed",
         description: error.message || "Failed to sign out. Please try again.",
       });
+      
+      // Try to restore state if sign out failed and we still have a session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setSession(session);
+        setUser(session.user);
+        if (session.user) {
+          await checkUserAdmin(session.user.id);
+        }
+      }
     } finally {
       setIsLoading(false);
     }

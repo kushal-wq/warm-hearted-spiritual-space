@@ -197,6 +197,30 @@ export type Database = {
         }
         Relationships: []
       }
+      priests: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: number
+          name: string
+          phone_number: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: never
+          name: string
+          phone_number: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: never
+          name?: string
+          phone_number?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

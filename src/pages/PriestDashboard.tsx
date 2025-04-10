@@ -13,7 +13,7 @@ import PriestDashboardCards from '@/components/priest/PriestDashboardCards';
 import PriestAccessInstructions from '@/components/priest/PriestAccessInstructions';
 import PriestTabNavigation from '@/components/priest/PriestTabNavigation';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -33,6 +33,7 @@ const PriestDashboard = () => {
   const [activeTab, setActiveTab] = useState<'schedule' | 'rituals' | 'teachings' | 'profile'>('schedule');
   const [showAccessInstructions, setShowAccessInstructions] = useState(false);
   const [showHelpDialog, setShowHelpDialog] = useState(false);
+  const queryClient = useQueryClient();
   
   // Fetch the user's priest status
   const { data: priestStatus, isLoading: isLoadingPriestStatus } = useQuery({
@@ -41,6 +42,7 @@ const PriestDashboard = () => {
       if (!user) return null;
       
       try {
+        console.log("Fetching priest status for user:", user.id);
         const { data, error } = await supabase
           .from('profiles')
           .select('is_priest, priest_status')
@@ -52,6 +54,7 @@ const PriestDashboard = () => {
           return { is_priest: false, priest_status: null };
         }
         
+        console.log("Priest status result:", data);
         return data;
       } catch (err) {
         console.error("Error in priest status query:", err);
@@ -59,6 +62,103 @@ const PriestDashboard = () => {
       }
     },
     enabled: !!user,
+  });
+  
+  // Fetch priest profile if user is a priest
+  const { data: priestProfile, isLoading: isLoadingPriestProfile } = useQuery({
+    queryKey: ['priest-profile', user?.id],
+    queryFn: async () => {
+      if (!user || !priestStatus?.is_priest) return null;
+      
+      try {
+        console.log("Fetching priest profile for user:", user.id);
+        const { data, error } = await supabase
+          .from('priest_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (error) {
+          if (error.code === 'PGRST116') {
+            console.log("No priest profile found, creating one...");
+            
+            // Get user profile to use name
+            const { data: userProfile } = await supabase
+              .from('profiles')
+              .select('first_name, last_name')
+              .eq('id', user.id)
+              .single();
+              
+            // Create a default priest profile
+            const name = userProfile ? 
+              `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() : 
+              'New Priest';
+              
+            const { data: newProfile, error: createError } = await supabase
+              .from('priest_profiles')
+              .insert({
+                user_id: user.id,
+                name: name || 'New Priest',
+                description: 'Experienced priest specializing in traditional ceremonies.',
+                specialties: ['Traditional Rituals', 'Meditation'],
+                experience_years: 1,
+                location: 'Delhi'
+              })
+              .select()
+              .single();
+              
+            if (createError) {
+              console.error("Error creating priest profile:", createError);
+              return null;
+            }
+            
+            return newProfile;
+          }
+          
+          console.error("Error fetching priest profile:", error);
+          return null;
+        }
+        
+        console.log("Priest profile result:", data);
+        return data;
+      } catch (err) {
+        console.error("Error in priest profile query:", err);
+        return null;
+      }
+    },
+    enabled: !!user && !!priestStatus?.is_priest,
+  });
+  
+  // Fetch priest bookings if user is a priest
+  const { data: priestBookings, isLoading: isLoadingBookings } = useQuery({
+    queryKey: ['priest-bookings', priestProfile?.id],
+    queryFn: async () => {
+      if (!priestProfile?.id) return [];
+      
+      try {
+        console.log("Fetching bookings for priest:", priestProfile.id);
+        const { data, error } = await supabase
+          .from('priest_bookings')
+          .select(`
+            *,
+            profiles:user_id (first_name, last_name, email)
+          `)
+          .eq('priest_id', priestProfile.id)
+          .order('booking_date', { ascending: true });
+        
+        if (error) {
+          console.error("Error fetching priest bookings:", error);
+          return [];
+        }
+        
+        console.log("Priest bookings result:", data);
+        return data || [];
+      } catch (err) {
+        console.error("Error in priest bookings query:", err);
+        return [];
+      }
+    },
+    enabled: !!priestProfile?.id,
   });
   
   useEffect(() => {
@@ -116,6 +216,13 @@ const PriestDashboard = () => {
     }
   }, [user, priestStatus, toast]);
   
+  // Function to refresh all priest data
+  const refreshPriestData = () => {
+    queryClient.invalidateQueries({ queryKey: ['priest-status'] });
+    queryClient.invalidateQueries({ queryKey: ['priest-profile'] });
+    queryClient.invalidateQueries({ queryKey: ['priest-bookings'] });
+  };
+  
   // Loading state with animation
   if (isLoading || isLoadingPriestStatus) {
     return (
@@ -125,7 +232,7 @@ const PriestDashboard = () => {
             <Loader2 className="h-12 w-12 animate-spin mb-4" />
           </div>
           <p className="text-spiritual-brown dark:text-gray-200 font-sanskrit text-xl">Loading Priest Dashboard...</p>
-          <p className="text-spiritual-brown/70 dark:text-gray-400 text-sm mt-2">Please wait</p>
+          <p className="text-spiritual-brown/70 dark:text-gray-400 text-sm mt-2">Please wait while we prepare your dashboard</p>
         </div>
       </div>
     );
@@ -176,20 +283,47 @@ const PriestDashboard = () => {
     );
   }
   
+  // Loading priest profile
+  if (isLoadingPriestProfile || isLoadingBookings) {
+    return (
+      <PriestLayout>
+        <div className="min-h-[400px] flex items-center justify-center">
+          <div className="p-8 flex flex-col items-center">
+            <div className="text-spiritual-gold">
+              <Loader2 className="h-8 w-8 animate-spin mb-4" />
+            </div>
+            <p className="text-spiritual-brown dark:text-spiritual-cream">Loading your priest data...</p>
+          </div>
+        </div>
+      </PriestLayout>
+    );
+  }
+  
   return (
     <PriestLayout>
       <div className="space-y-8 animate-fade-in">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-spiritual-brown dark:text-spiritual-cream">Priest Dashboard</h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowHelpDialog(true)}
-            className="flex items-center gap-1"
-          >
-            <HelpCircle className="h-4 w-4" />
-            <span>Help</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshPriestData}
+              className="flex items-center gap-1"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span>Refresh Data</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowHelpDialog(true)}
+              className="flex items-center gap-1"
+            >
+              <HelpCircle className="h-4 w-4" />
+              <span>Help</span>
+            </Button>
+          </div>
         </div>
 
         {showAccessInstructions && (
@@ -197,16 +331,16 @@ const PriestDashboard = () => {
         )}
       
         {/* Priest dashboard overview */}
-        <PriestDashboardCards setActiveTab={setActiveTab} />
+        <PriestDashboardCards setActiveTab={setActiveTab} bookings={priestBookings} />
         
         {/* Selected tab content */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <PriestTabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
           
-          {activeTab === 'schedule' && <PriestSchedule />}
+          {activeTab === 'schedule' && <PriestSchedule bookings={priestBookings} priestProfile={priestProfile} />}
           {activeTab === 'rituals' && <PriestRituals />}
           {activeTab === 'teachings' && <PriestTeachings />}
-          {activeTab === 'profile' && <PriestProfile />}
+          {activeTab === 'profile' && <PriestProfile priestProfile={priestProfile} onProfileUpdated={refreshPriestData} />}
         </div>
       </div>
 

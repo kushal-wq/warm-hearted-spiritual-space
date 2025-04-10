@@ -27,19 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-interface Profile {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  is_admin: boolean;
-  is_priest: boolean;
-  priest_status: 'pending' | 'approved' | 'rejected' | null;
-  email?: string;
-  avatar_url?: string | null;
-  created_at?: string;
-  updated_at?: string;
-}
+import { UserProfile } from '@/types/priest';
 
 // Define an interface for the auth user structure
 interface AuthUser {
@@ -71,36 +59,50 @@ const UsersTab = () => {
         
         console.log("Profiles data fetched:", profiles);
         
-        // Then get user emails - note we're using a safer approach without admin API
-        const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+        // Then get user emails - we'll use admin API for this
+        // Since we can't directly query auth.users, we'll work with what we have
+        const profilesWithEmails = await Promise.all(profiles.map(async (profile) => {
+          try {
+            // Try to get the user's email from auth if possible
+            const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(profile.id);
+            
+            if (userError || !user) {
+              console.log(`Couldn't fetch email for user ${profile.id}`, userError);
+              return {
+                ...profile,
+                email: 'Unknown',
+                is_priest: profile.is_priest || false,
+                priest_status: profile.priest_status || null
+              };
+            }
+            
+            return {
+              ...profile,
+              email: user.email || 'Unknown',
+              is_priest: profile.is_priest || false,
+              priest_status: profile.priest_status || null
+            };
+          } catch (error) {
+            console.error("Error fetching user email:", error);
+            return {
+              ...profile,
+              email: 'Unknown',
+              is_priest: profile.is_priest || false,
+              priest_status: profile.priest_status || null
+            };
+          }
+        }));
         
-        if (authError) {
-          console.error("Could not fetch auth users:", authError);
-          // Even if we can't fetch emails, return profiles
-          return profiles.map(profile => ({
-            ...profile,
-            email: 'Unknown',
-            is_priest: profile.is_priest || false,
-            priest_status: profile.priest_status || null
-          })) as Profile[];
-        }
-        
-        // Combine the data with safer null checks
-        const usersArray = authUsers?.users || [];
-        const combinedData = profiles.map(profile => {
-          const authUser = usersArray.find((u: any) => u.id === profile.id);
-          return {
-            ...profile,
-            email: authUser?.email || 'Unknown',
-            is_priest: profile.is_priest || false,
-            priest_status: profile.priest_status || null
-          };
-        });
-        
-        return combinedData as Profile[];
+        console.log("Profiles with emails:", profilesWithEmails);
+        return profilesWithEmails as UserProfile[];
       } catch (error) {
         console.error("Error fetching profiles:", error);
-        return [] as Profile[];
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load user profiles",
+        });
+        return [] as UserProfile[];
       }
     }
   });
@@ -121,6 +123,8 @@ const UsersTab = () => {
         description: `Admin status ${!currentStatus ? 'granted' : 'revoked'} successfully`,
       });
       
+      // Invalidate all queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
       await refetchProfiles();
       setIsProcessing(false);
       setDialogType(null);
@@ -153,6 +157,41 @@ const UsersTab = () => {
       if (error) {
         console.error("Error updating priest status:", error);
         throw error;
+      }
+
+      // Only create priest profile if approving
+      if (status === 'approved') {
+        // Check if user profile exists
+        const user = profiles?.find(p => p.id === userId);
+        
+        if (user) {
+          // Check if priest profile already exists
+          const { data: existingProfile } = await supabase
+            .from('priest_profiles')
+            .select('id')
+            .eq('user_id', userId)
+            .maybeSingle();
+            
+          if (!existingProfile) {
+            // Create initial priest profile
+            const { error: priestError } = await supabase
+              .from('priest_profiles')
+              .insert({
+                user_id: userId,
+                name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'New Priest',
+                description: 'Experienced priest specializing in traditional ceremonies.',
+                specialties: ['Traditional Rituals', 'Meditation'],
+                experience_years: 1,
+                location: 'Delhi'
+              });
+              
+            if (priestError) {
+              console.error("Error creating priest profile:", priestError);
+              // We'll still mark approval as successful even if profile creation fails
+              // The priest can complete their profile later
+            }
+          }
+        }
       }
 
       toast({
@@ -214,11 +253,14 @@ const UsersTab = () => {
 
   // Force refresh profiles data
   const handleRefresh = () => {
+    setIsProcessing(true);
     queryClient.invalidateQueries({ queryKey: ['profiles'] });
-    refetchProfiles();
-    toast({
-      title: "Refreshing",
-      description: "Updating user data..."
+    refetchProfiles().finally(() => {
+      setIsProcessing(false);
+      toast({
+        title: "Refreshed",
+        description: "User data has been updated"
+      });
     });
   };
 
