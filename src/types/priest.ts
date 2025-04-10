@@ -1,4 +1,3 @@
-
 export interface PriestProfile {
   id?: string;
   user_id: string;
@@ -27,6 +26,7 @@ export interface PriestBooking {
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   created_at?: string;
   updated_at?: string;
+  profiles?: any; // Added to support the profiles join from Supabase
 }
 
 export interface UserProfile {

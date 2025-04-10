@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,7 +34,6 @@ const PriestDashboard = () => {
   const [showHelpDialog, setShowHelpDialog] = useState(false);
   const queryClient = useQueryClient();
   
-  // Fetch the user's priest status
   const { data: priestStatus, isLoading: isLoadingPriestStatus } = useQuery({
     queryKey: ['priest-status', user?.id],
     queryFn: async () => {
@@ -64,7 +62,6 @@ const PriestDashboard = () => {
     enabled: !!user,
   });
   
-  // Fetch priest profile if user is a priest
   const { data: priestProfile, isLoading: isLoadingPriestProfile } = useQuery({
     queryKey: ['priest-profile', user?.id],
     queryFn: async () => {
@@ -82,14 +79,12 @@ const PriestDashboard = () => {
           if (error.code === 'PGRST116') {
             console.log("No priest profile found, creating one...");
             
-            // Get user profile to use name
             const { data: userProfile } = await supabase
               .from('profiles')
               .select('first_name, last_name')
               .eq('id', user.id)
               .single();
               
-            // Create a default priest profile
             const name = userProfile ? 
               `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() : 
               'New Priest';
@@ -129,7 +124,6 @@ const PriestDashboard = () => {
     enabled: !!user && !!priestStatus?.is_priest,
   });
   
-  // Fetch priest bookings if user is a priest
   const { data: priestBookings, isLoading: isLoadingBookings } = useQuery({
     queryKey: ['priest-bookings', priestProfile?.id],
     queryFn: async () => {
@@ -173,7 +167,6 @@ const PriestDashboard = () => {
   }, [user, isLoading, navigate, toast]);
   
   useEffect(() => {
-    // Check priest approval status when data is loaded
     if (!isLoadingPriestStatus && priestStatus) {
       if (priestStatus.priest_status === 'pending') {
         toast({
@@ -207,7 +200,6 @@ const PriestDashboard = () => {
         description: "Manage your rituals, teachings, and schedule.",
       });
       
-      // Show access instructions on first visit
       const firstVisit = localStorage.getItem('priest_dashboard_visited') === null;
       if (firstVisit) {
         setShowAccessInstructions(true);
@@ -216,14 +208,12 @@ const PriestDashboard = () => {
     }
   }, [user, priestStatus, toast]);
   
-  // Function to refresh all priest data
   const refreshPriestData = () => {
     queryClient.invalidateQueries({ queryKey: ['priest-status'] });
     queryClient.invalidateQueries({ queryKey: ['priest-profile'] });
     queryClient.invalidateQueries({ queryKey: ['priest-bookings'] });
   };
   
-  // Loading state with animation
   if (isLoading || isLoadingPriestStatus) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-spiritual-cream/30 to-white dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
@@ -238,7 +228,6 @@ const PriestDashboard = () => {
     );
   }
   
-  // Access denied if not an approved priest
   if (!user || !priestStatus?.is_priest || priestStatus?.priest_status !== 'approved') {
     return (
       <>
@@ -283,7 +272,6 @@ const PriestDashboard = () => {
     );
   }
   
-  // Loading priest profile
   if (isLoadingPriestProfile || isLoadingBookings) {
     return (
       <PriestLayout>
@@ -330,34 +318,25 @@ const PriestDashboard = () => {
           <PriestAccessInstructions onDismiss={() => setShowAccessInstructions(false)} />
         )}
       
-        {/* Priest dashboard overview */}
         <PriestDashboardCards 
           setActiveTab={setActiveTab} 
           bookings={priestBookings || []} 
         />
         
-        {/* Selected tab content */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <PriestTabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
           
           {activeTab === 'schedule' && (
-            <PriestSchedule 
-              bookings={priestBookings || []} 
-              priestProfile={priestProfile} 
-            />
+            <PriestSchedule />
           )}
           {activeTab === 'rituals' && <PriestRituals />}
           {activeTab === 'teachings' && <PriestTeachings />}
           {activeTab === 'profile' && (
-            <PriestProfile 
-              priestProfile={priestProfile} 
-              onProfileUpdated={refreshPriestData} 
-            />
+            <PriestProfile />
           )}
         </div>
       </div>
 
-      {/* Help Dialog */}
       <Dialog open={showHelpDialog} onOpenChange={setShowHelpDialog}>
         <DialogContent>
           <DialogHeader>

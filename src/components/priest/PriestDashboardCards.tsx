@@ -1,24 +1,9 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarIcon, Book, Clock, Settings, Users, BookOpen } from 'lucide-react';
-
-type PriestBooking = {
-  id: string;
-  user_id: string;
-  priest_id: string;
-  booking_date: string;
-  price: number;
-  purpose: string;
-  address: string;
-  status: string;
-  notes?: string | null;
-  created_at: string;
-  updated_at: string;
-  profiles?: any;
-};
+import { PriestBooking } from '@/types/priest';
 
 interface PriestDashboardCardsProps {
   setActiveTab: (tab: 'schedule' | 'rituals' | 'teachings' | 'profile') => void;
