@@ -162,9 +162,13 @@ const UsersTab = () => {
       // Only create priest profile if approving
       if (status === 'approved') {
         // Check if user profile exists
-        const user = profiles?.find(p => p.id === userId);
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', userId)
+          .single();
         
-        if (user) {
+        if (userProfile) {
           // Check if priest profile already exists
           const { data: existingProfile } = await supabase
             .from('priest_profiles')
@@ -178,16 +182,19 @@ const UsersTab = () => {
               .from('priest_profiles')
               .insert({
                 user_id: userId,
-                name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'New Priest',
+                name: `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() || 'New Priest',
                 description: 'Experienced priest specializing in traditional ceremonies.',
                 specialties: ['Traditional Rituals', 'Meditation'],
                 experience_years: 1,
+                base_price: 100, // Added base price
+                avatar_url: '/placeholder.svg', // Added avatar URL
+                availability: 'Weekends and evenings', // Added availability
                 location: 'Delhi'
               });
               
             if (priestError) {
               console.error("Error creating priest profile:", priestError);
-              // We'll still mark approval as successful even if profile creation fails
+              // Continue with the approval process even if profile creation fails
               // The priest can complete their profile later
             }
           }
@@ -201,6 +208,9 @@ const UsersTab = () => {
       
       // Invalidate and refetch to ensure we get fresh data
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['priest-status'] });
+      queryClient.invalidateQueries({ queryKey: ['priest-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['priest-bookings'] });
       await refetchProfiles();
       setIsProcessing(false);
       setDialogType(null);
