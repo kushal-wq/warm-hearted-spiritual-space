@@ -1,59 +1,51 @@
-
 import React from 'react';
-import { Calendar, Book, BookOpen, Users, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { User, Calendar, BookOpen, Settings } from 'lucide-react';
+import PriestProfile from './PriestProfile';
+import PriestSchedule from './PriestSchedule';
+import PriestTeachings from './PriestTeachings';
+import PriestRituals from './PriestRituals';
 
 interface PriestTabNavigationProps {
-  activeTab: 'schedule' | 'rituals' | 'teachings' | 'profile';
-  setActiveTab: (tab: 'schedule' | 'rituals' | 'teachings' | 'profile') => void;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
 }
 
-const PriestTabNavigation = ({ activeTab, setActiveTab }: PriestTabNavigationProps) => {
+const PriestTabNavigation: React.FC<PriestTabNavigationProps> = ({ activeTab, setActiveTab }) => {
   return (
-    <div className="flex justify-between items-center mb-6">
-      <div className="flex flex-wrap gap-2">
-        <Button 
-          variant={activeTab === 'schedule' ? 'default' : 'outline'} 
-          onClick={() => setActiveTab('schedule')}
-          className={activeTab === 'schedule' ? 'bg-spiritual-gold hover:bg-spiritual-gold/90' : ''}
-          size="sm"
-        >
-          <Calendar className="h-4 w-4 mr-2" />
-          Schedule
-        </Button>
-        <Button 
-          variant={activeTab === 'rituals' ? 'default' : 'outline'} 
-          onClick={() => setActiveTab('rituals')}
-          className={activeTab === 'rituals' ? 'bg-spiritual-gold hover:bg-spiritual-gold/90' : ''}
-          size="sm"
-        >
-          <Book className="h-4 w-4 mr-2" />
-          Rituals
-        </Button>
-        <Button 
-          variant={activeTab === 'teachings' ? 'default' : 'outline'} 
-          onClick={() => setActiveTab('teachings')}
-          className={activeTab === 'teachings' ? 'bg-spiritual-gold hover:bg-spiritual-gold/90' : ''}
-          size="sm"
-        >
-          <BookOpen className="h-4 w-4 mr-2" />
-          Teachings
-        </Button>
-        <Button 
-          variant={activeTab === 'profile' ? 'default' : 'outline'} 
-          onClick={() => setActiveTab('profile')}
-          className={activeTab === 'profile' ? 'bg-spiritual-gold hover:bg-spiritual-gold/90' : ''}
-          size="sm"
-        >
-          <Users className="h-4 w-4 mr-2" />
-          Profile
-        </Button>
-      </div>
-      
-      <Button variant="outline" size="icon">
-        <Settings className="h-4 w-4" />
-      </Button>
-    </div>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <TabsList className="mb-4 flex justify-center space-x-4">
+        <TabsTrigger value="profile" className="data-[state=active]:bg-spiritual-gold/20 data-[state=active]:text-spiritual-brown flex items-center space-x-2">
+          <User className="h-4 w-4" />
+          <span>Profile</span>
+        </TabsTrigger>
+        <TabsTrigger value="schedule" className="data-[state=active]:bg-spiritual-gold/20 data-[state=active]:text-spiritual-brown flex items-center space-x-2">
+          <Calendar className="h-4 w-4" />
+          <span>Schedule</span>
+        </TabsTrigger>
+        <TabsTrigger value="teachings" className="data-[state=active]:bg-spiritual-gold/20 data-[state=active]:text-spiritual-brown flex items-center space-x-2">
+          <BookOpen className="h-4 w-4" />
+          <span>Teachings</span>
+        </TabsTrigger>
+          <TabsTrigger value="rituals" className="data-[state=active]:bg-spiritual-gold/20 data-[state=active]:text-spiritual-brown flex items-center space-x-2">
+          <Settings className="h-4 w-4" />
+          <span>Rituals</span>
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="profile">
+        <PriestProfile />
+      </TabsContent>
+      <TabsContent value="schedule">
+        <PriestSchedule />
+      </TabsContent>
+      <TabsContent value="teachings">
+        <PriestTeachings />
+      </TabsContent>
+      <TabsContent value="rituals">
+        <PriestRituals />
+      </TabsContent>
+    </Tabs>
   );
 };
 
