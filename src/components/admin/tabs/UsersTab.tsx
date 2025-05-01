@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -136,6 +135,7 @@ const UsersTab = () => {
       setIsProcessing(true);
       console.log(`Approving priest with ID ${userId}, setting status to: ${status}`);
       
+      // Update user profile with priest status
       const updateData = {
         priest_status: status,
         is_priest: status === 'approved'
@@ -151,10 +151,12 @@ const UsersTab = () => {
         throw profileUpdateError;
       }
 
+      // If approving, create priest profile record
       if (status === 'approved') {
         console.log("Creating priest profile for approved user");
         
         try {
+          // Get user's name for the priest profile
           const { data: userProfile, error: profileError } = await supabase
             .from('profiles')
             .select('first_name, last_name')
@@ -241,12 +243,10 @@ const UsersTab = () => {
       });
       
       // Invalidate all related queries to refresh data
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['profiles'] }),
-        queryClient.invalidateQueries({ queryKey: ['priest-status'] }),
-        queryClient.invalidateQueries({ queryKey: ['priest-profile'] }),
-        queryClient.invalidateQueries({ queryKey: ['priest-bookings'] })
-      ]);
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['priest-status'] });
+      queryClient.invalidateQueries({ queryKey: ['priest-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['priest-bookings'] });
       
       await refetchProfiles();
       setIsProcessing(false);
