@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Calendar, BookOpen, Settings } from 'lucide-react';
@@ -7,13 +8,13 @@ import PriestTeachings from './PriestTeachings';
 import PriestRituals from './PriestRituals';
 
 interface PriestTabNavigationProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  activeTab: 'profile' | 'schedule' | 'teachings' | 'rituals';
+  setActiveTab: React.Dispatch<React.SetStateAction<'profile' | 'schedule' | 'teachings' | 'rituals'>>;
 }
 
 const PriestTabNavigation: React.FC<PriestTabNavigationProps> = ({ activeTab, setActiveTab }) => {
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'profile' | 'schedule' | 'teachings' | 'rituals')} className="w-full">
       <TabsList className="mb-4 flex justify-center space-x-4">
         <TabsTrigger value="profile" className="data-[state=active]:bg-spiritual-gold/20 data-[state=active]:text-spiritual-brown flex items-center space-x-2">
           <User className="h-4 w-4" />
