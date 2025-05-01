@@ -168,6 +168,7 @@ const UsersTab = () => {
           
           console.log("User profile fetched:", userProfile);
           
+          // Check if priest profile already exists
           const { data: existingProfile, error: existingError } = await supabase
             .from('priest_profiles')
             .select('id')
@@ -184,6 +185,7 @@ const UsersTab = () => {
           if (!existingProfile) {
             console.log("No existing profile found, creating new priest profile");
             
+            // Create a new priest profile
             const priestProfileData = {
               user_id: userId,
               name: `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim() || 'New Priest',
@@ -198,23 +200,29 @@ const UsersTab = () => {
             
             console.log("Creating priest profile with data:", priestProfileData);
             
-            const { data: newProfile, error: insertError } = await supabase
-              .from('priest_profiles')
-              .insert(priestProfileData)
-              .select('*')
-              .single();
-            
-            if (insertError) {
-              console.error("Failed to create priest profile:", insertError);
+            try {
+              const { data: newProfile, error: insertError } = await supabase
+                .from('priest_profiles')
+                .insert(priestProfileData)
+                .select('*')
+                .single();
+              
+              if (insertError) {
+                console.error("Failed to create priest profile:", insertError);
+                throw insertError;
+              }
+              
+              console.log("New priest profile created successfully:", newProfile);
+            } catch (insertError) {
+              console.error("Error creating priest profile:", insertError);
               throw insertError;
             }
-            
-            console.log("New priest profile created successfully:", newProfile);
           } else {
             console.log("Priest profile already exists, skipping creation");
           }
         } catch (profileStepError: any) {
           console.error("Error in profile creation step:", profileStepError);
+          // Rollback the profile update if priest profile creation fails
           await supabase
             .from('profiles')
             .update({ 
@@ -232,6 +240,7 @@ const UsersTab = () => {
         description: `Priest application ${status === 'approved' ? 'approved' : 'rejected'} successfully`,
       });
       
+      // Invalidate all related queries to refresh data
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['profiles'] }),
         queryClient.invalidateQueries({ queryKey: ['priest-status'] }),
