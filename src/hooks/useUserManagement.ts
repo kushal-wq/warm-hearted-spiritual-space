@@ -102,22 +102,30 @@ export const useUserManagement = () => {
       setIsProcessing(true);
       console.log(`Approving priest with ID ${userId}, setting status to: ${status}`);
       
-      // Update user profile with priest status
-      const updateData = {
-        priest_status: status === 'approved' ? 'approved' : 'rejected',
-        is_priest: status === 'approved' ? true : false  // Explicitly set to true if approved, false otherwise
-      };
+      // Use a raw SQL query to ensure direct database update
+      const { error: directUpdateError } = await supabase.rpc('update_priest_status', {
+        user_id: userId,
+        new_status: status,
+        is_priest_value: status === 'approved'
+      });
 
-      console.log("Updating profile with data:", updateData);
-      
-      const { error: profileUpdateError } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', userId);
-
-      if (profileUpdateError) {
-        console.error("Error updating priest status:", profileUpdateError);
-        throw profileUpdateError;
+      if (directUpdateError) {
+        console.error("Error using RPC for priest status update:", directUpdateError);
+        
+        // Fallback to regular update if RPC fails
+        console.log("Falling back to regular update...");
+        const { error: profileUpdateError } = await supabase
+          .from('profiles')
+          .update({
+            priest_status: status,
+            is_priest: status === 'approved'
+          })
+          .eq('id', userId);
+  
+        if (profileUpdateError) {
+          console.error("Error updating priest status:", profileUpdateError);
+          throw profileUpdateError;
+        }
       }
 
       console.log("Profile updated successfully with status:", status);
@@ -208,24 +216,23 @@ export const useUserManagement = () => {
         }
       }
 
-      // Force invalidate queries and fetch fresh data
+      // Force invalidate all queries and wait a moment for database consistency
       console.log("Invalidating queries to refresh UI data");
-      queryClient.invalidateQueries({ queryKey: ['profiles'] });
-      queryClient.invalidateQueries({ queryKey: ['priest-status'] });
-      queryClient.invalidateQueries({ queryKey: ['priest-profile'] });
-      queryClient.invalidateQueries({ queryKey: ['priest-bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['profiles'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['priest-status'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['priest-profile'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['priest-bookings'], exact: false });
       
-      // Re-fetch immediately to ensure UI is updated
-      console.log("Forcing data refresh");
+      // Wait for database consistency
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Wait a brief moment for the database to settle - important for Supabase
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      // Force immediate refetch
+      console.log("Forcing profiles refetch");
       const refreshResult = await refetchProfiles();
-      console.log("Data refresh result:", refreshResult);
+      console.log("Profiles refetch result:", refreshResult);
       
-      // Verify that the user status was updated correctly
-      const updatedProfile = refreshResult?.data?.find((profile) => profile.id === userId);
+      // Double-check the status was updated
+      const updatedProfile = refreshResult?.data?.find(p => p.id === userId);
       console.log("Updated profile after refresh:", updatedProfile);
       
       toast({

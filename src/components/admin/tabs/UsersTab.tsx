@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Search, RefreshCw, User } from 'lucide-react';
@@ -29,6 +29,18 @@ const UsersTab = () => {
   // Calculate counts for UI badges
   const pendingCount = profiles?.filter(p => p.priest_status === 'pending').length || 0;
   const priestsCount = profiles?.filter(p => p.is_priest === true).length || 0;
+
+  // Callback for successful priest approval
+  const onPriestApproved = useCallback((userId: string) => {
+    console.log("Priest approved callback triggered for user:", userId);
+    // Switch to priests tab
+    setActiveTab('priests');
+    // Force a data refresh
+    setTimeout(() => {
+      refetchProfiles();
+      console.log("Data refreshed after priest approval");
+    }, 500);
+  }, [refetchProfiles]);
 
   // Auto-refresh when dialog closes or processing finishes
   useEffect(() => {
@@ -128,7 +140,13 @@ const UsersTab = () => {
         profiles={profiles}
         isProcessing={isProcessing}
         toggleAdminStatus={toggleAdminStatus}
-        handlePriestApproval={handlePriestApproval}
+        handlePriestApproval={async (userId, status) => {
+          const success = await handlePriestApproval(userId, status);
+          if (success && status === 'approved') {
+            setTimeout(() => onPriestApproved(userId), 1000);
+          }
+          return success;
+        }}
         revokePriestStatus={revokePriestStatus}
       />
     </Card>
