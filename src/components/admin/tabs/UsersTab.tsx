@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserManagement } from '@/hooks/useUserManagement';
 import UsersTable from '../users/UsersTable';
 import UserDialogs from '../users/UserDialogs';
-import { DialogState } from '../types';
+import { DialogState, UserTabProps } from '../types';
 
 const UsersTab = () => {
   const [searchTerm, setSearchTerm] = useState('');
