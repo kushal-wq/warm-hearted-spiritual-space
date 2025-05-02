@@ -11,7 +11,7 @@ export interface UserTabProps {
   isLoading: boolean;
   isProcessing: boolean;
   refetchProfiles: () => Promise<any>;
-  handlePriestApproval: (userId: string, status: 'approved' | 'rejected') => Promise<void>;
-  toggleAdminStatus: (userId: string, currentStatus: boolean) => Promise<void>;
-  revokePriestStatus: (userId: string) => Promise<void>;
+  handlePriestApproval: (userId: string, status: 'approved' | 'rejected') => Promise<boolean>;
+  toggleAdminStatus: (userId: string, currentStatus: boolean) => Promise<boolean>;
+  revokePriestStatus: (userId: string) => Promise<boolean>;
 }
