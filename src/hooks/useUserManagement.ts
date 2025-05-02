@@ -102,14 +102,17 @@ export const useUserManagement = () => {
       setIsProcessing(true);
       console.log(`Approving priest with ID ${userId}, setting status to: ${status}`);
       
-      // Fix: Explicitly cast the parameters to any to work around the TypeScript error
+      // Fixed: Create a properly typed parameters object
+      const params = {
+        user_id: userId,
+        new_status: status,
+        is_priest_value: status === 'approved'
+      };
+      
+      // Using the parameters object with type assertion
       const { data, error: directUpdateError } = await supabase.rpc(
         'update_priest_status',
-        {
-          user_id: userId,
-          new_status: status,
-          is_priest_value: status === 'approved'
-        } as any
+        params
       );
 
       if (directUpdateError) {
