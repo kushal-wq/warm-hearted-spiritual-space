@@ -102,12 +102,15 @@ export const useUserManagement = () => {
       setIsProcessing(true);
       console.log(`Approving priest with ID ${userId}, setting status to: ${status}`);
       
-      // Use a raw SQL query to ensure direct database update
-      const { error: directUpdateError } = await supabase.rpc('update_priest_status', {
-        user_id: userId,
-        new_status: status,
-        is_priest_value: status === 'approved'
-      });
+      // Fix: Explicitly cast the parameters to any to work around the TypeScript error
+      const { data, error: directUpdateError } = await supabase.rpc(
+        'update_priest_status',
+        {
+          user_id: userId,
+          new_status: status,
+          is_priest_value: status === 'approved'
+        } as any
+      );
 
       if (directUpdateError) {
         console.error("Error using RPC for priest status update:", directUpdateError);
@@ -129,6 +132,7 @@ export const useUserManagement = () => {
       }
 
       console.log("Profile updated successfully with status:", status);
+      console.log("RPC update result:", data);
 
       // If approving, create priest profile record
       if (status === 'approved') {
