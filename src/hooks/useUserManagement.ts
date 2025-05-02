@@ -83,7 +83,6 @@ export const useUserManagement = () => {
         description: `Admin status ${!currentStatus ? 'granted' : 'revoked'} successfully`,
       });
       
-      queryClient.invalidateQueries({ queryKey: ['profiles'] });
       await refetchProfiles();
       setIsProcessing(false);
       return true;
@@ -118,6 +117,8 @@ export const useUserManagement = () => {
         console.error("Error updating priest status:", profileUpdateError);
         throw profileUpdateError;
       }
+
+      console.log("Profile updated successfully with status:", status);
 
       // If approving, create priest profile record
       if (status === 'approved') {
@@ -205,18 +206,20 @@ export const useUserManagement = () => {
         }
       }
 
-      toast({
-        title: "Success",
-        description: `Priest application ${status === 'approved' ? 'approved' : 'rejected'} successfully`,
-      });
-      
       // Invalidate all related queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
       queryClient.invalidateQueries({ queryKey: ['priest-status'] });
       queryClient.invalidateQueries({ queryKey: ['priest-profile'] });
       queryClient.invalidateQueries({ queryKey: ['priest-bookings'] });
       
+      // Ensure we get fresh data after the update
       await refetchProfiles();
+      
+      toast({
+        title: "Success",
+        description: `Priest application ${status === 'approved' ? 'approved' : 'rejected'} successfully`,
+      });
+      
       setIsProcessing(false);
       return true;
     } catch (error: any) {
@@ -246,7 +249,6 @@ export const useUserManagement = () => {
         description: "Priest status revoked successfully",
       });
       
-      queryClient.invalidateQueries({ queryKey: ['profiles'] });
       await refetchProfiles();
       setIsProcessing(false);
       return true;

@@ -62,7 +62,10 @@ const UserDialogs: React.FC<UserDialogsProps> = ({
             <AlertDialogAction 
               onClick={async () => {
                 if (userId && profile) {
-                  await toggleAdminStatus(userId, profile.is_admin || false);
+                  const success = await toggleAdminStatus(userId, profile.is_admin || false);
+                  if (success) {
+                    closeDialog();
+                  }
                 }
               }}
               disabled={isProcessing}
@@ -84,7 +87,14 @@ const UserDialogs: React.FC<UserDialogsProps> = ({
           <AlertDialogFooter>
             <AlertDialogCancel onClick={closeDialog} disabled={isProcessing}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={async () => userId && await handlePriestApproval(userId, 'approved')}
+              onClick={async () => {
+                if (userId) {
+                  const success = await handlePriestApproval(userId, 'approved');
+                  if (success) {
+                    closeDialog();
+                  }
+                }
+              }}
               className="bg-green-600 hover:bg-green-700"
               disabled={isProcessing}
             >
@@ -105,7 +115,14 @@ const UserDialogs: React.FC<UserDialogsProps> = ({
           <AlertDialogFooter>
             <AlertDialogCancel onClick={closeDialog} disabled={isProcessing}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={async () => userId && await handlePriestApproval(userId, 'rejected')}
+              onClick={async () => {
+                if (userId) {
+                  const success = await handlePriestApproval(userId, 'rejected');
+                  if (success) {
+                    closeDialog();
+                  }
+                }
+              }}
               className="bg-red-600 hover:bg-red-700"
               disabled={isProcessing}
             >
@@ -126,7 +143,14 @@ const UserDialogs: React.FC<UserDialogsProps> = ({
           <AlertDialogFooter>
             <AlertDialogCancel onClick={closeDialog} disabled={isProcessing}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={async () => userId && await revokePriestStatus(userId)}
+              onClick={async () => {
+                if (userId) {
+                  const success = await revokePriestStatus(userId);
+                  if (success) {
+                    closeDialog();
+                  }
+                }
+              }}
               className="bg-red-600 hover:bg-red-700"
               disabled={isProcessing}
             >
