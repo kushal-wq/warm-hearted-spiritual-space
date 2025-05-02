@@ -90,9 +90,13 @@ const UserDialogs: React.FC<UserDialogsProps> = ({
               onClick={async () => {
                 if (userId) {
                   console.log("Approving priest with ID:", userId);
+                  // Force a brief delay to ensure UI focus
+                  await new Promise(resolve => setTimeout(resolve, 100));
                   const success = await handlePriestApproval(userId, 'approved');
                   console.log("Approval result:", success);
                   if (success) {
+                    // Force a brief delay to allow the UI to update before closing the dialog
+                    await new Promise(resolve => setTimeout(resolve, 500));
                     closeDialog();
                   }
                 }

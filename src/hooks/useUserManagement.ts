@@ -104,7 +104,7 @@ export const useUserManagement = () => {
       
       // Update user profile with priest status
       const updateData = {
-        priest_status: status,
+        priest_status: status === 'approved' ? 'approved' : 'rejected',
         is_priest: status === 'approved' ? true : false  // Explicitly set to true if approved, false otherwise
       };
 
@@ -208,17 +208,25 @@ export const useUserManagement = () => {
         }
       }
 
-      // Force invalidate all related queries immediately
+      // Force invalidate queries and fetch fresh data
       console.log("Invalidating queries to refresh UI data");
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
       queryClient.invalidateQueries({ queryKey: ['priest-status'] });
       queryClient.invalidateQueries({ queryKey: ['priest-profile'] });
       queryClient.invalidateQueries({ queryKey: ['priest-bookings'] });
       
-      // Force a fresh data fetch
+      // Re-fetch immediately to ensure UI is updated
       console.log("Forcing data refresh");
+      
+      // Wait a brief moment for the database to settle - important for Supabase
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const refreshResult = await refetchProfiles();
       console.log("Data refresh result:", refreshResult);
+      
+      // Verify that the user status was updated correctly
+      const updatedProfile = refreshResult?.data?.find((profile) => profile.id === userId);
+      console.log("Updated profile after refresh:", updatedProfile);
       
       toast({
         title: "Success",

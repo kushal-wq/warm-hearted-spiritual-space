@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Search, RefreshCw, User } from 'lucide-react';
@@ -26,8 +26,23 @@ const UsersTab = () => {
     refetchProfiles
   } = useUserManagement();
 
+  // Calculate counts for UI badges
   const pendingCount = profiles?.filter(p => p.priest_status === 'pending').length || 0;
   const priestsCount = profiles?.filter(p => p.is_priest === true).length || 0;
+
+  // Auto-refresh when dialog closes or processing finishes
+  useEffect(() => {
+    if (dialogState.type === null && !isProcessing) {
+      refetchProfiles();
+    }
+  }, [dialogState.type, isProcessing, refetchProfiles]);
+
+  // Auto-switch to priests tab when a priest is approved and there are no more pending requests
+  useEffect(() => {
+    if (pendingCount === 0 && activeTab === 'pending' && priestsCount > 0) {
+      setActiveTab('priests');
+    }
+  }, [pendingCount, priestsCount, activeTab]);
 
   return (
     <Card className="shadow-sm hover:shadow-md transition-all duration-300">
