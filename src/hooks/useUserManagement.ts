@@ -105,9 +105,11 @@ export const useUserManagement = () => {
       // Update user profile with priest status
       const updateData = {
         priest_status: status,
-        is_priest: status === 'approved'
+        is_priest: status === 'approved' ? true : false  // Explicitly set to true if approved, false otherwise
       };
 
+      console.log("Updating profile with data:", updateData);
+      
       const { error: profileUpdateError } = await supabase
         .from('profiles')
         .update(updateData)
@@ -206,14 +208,17 @@ export const useUserManagement = () => {
         }
       }
 
-      // Invalidate all related queries to refresh data
+      // Force invalidate all related queries immediately
+      console.log("Invalidating queries to refresh UI data");
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
       queryClient.invalidateQueries({ queryKey: ['priest-status'] });
       queryClient.invalidateQueries({ queryKey: ['priest-profile'] });
       queryClient.invalidateQueries({ queryKey: ['priest-bookings'] });
       
-      // Ensure we get fresh data after the update
-      await refetchProfiles();
+      // Force a fresh data fetch
+      console.log("Forcing data refresh");
+      const refreshResult = await refetchProfiles();
+      console.log("Data refresh result:", refreshResult);
       
       toast({
         title: "Success",

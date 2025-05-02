@@ -89,7 +89,9 @@ const UserDialogs: React.FC<UserDialogsProps> = ({
             <AlertDialogAction 
               onClick={async () => {
                 if (userId) {
+                  console.log("Approving priest with ID:", userId);
                   const success = await handlePriestApproval(userId, 'approved');
+                  console.log("Approval result:", success);
                   if (success) {
                     closeDialog();
                   }
