@@ -20,20 +20,16 @@ export const usePriestStatus = (
       console.log(`Approving priest with ID ${userId}, setting status to: ${status}`);
       
       // Define the proper parameters with correct types
-      const params: {
-        user_id: string;
-        new_status: 'approved' | 'rejected';
-        is_priest_value: boolean;
-      } = {
+      const params = {
         user_id: userId,
         new_status: status,
         is_priest_value: status === 'approved'
       };
       
-      // Let TypeScript infer the types
+      // Use type assertion to fix TS error
       const { data, error: directUpdateError } = await supabase.rpc(
         'update_priest_status',
-        params
+        params as any
       );
 
       if (directUpdateError) {
