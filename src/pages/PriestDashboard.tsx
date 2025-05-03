@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/dialog';
 
 const PriestDashboard = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'schedule' | 'rituals' | 'teachings' | 'profile'>('schedule');
@@ -67,7 +67,7 @@ const PriestDashboard = () => {
   const { data: priestProfile, isLoading: isLoadingPriestProfile } = useQuery({
     queryKey: ['priest-profile', user?.id],
     queryFn: async () => {
-      if (!user || !priestStatus?.is_priest) return null;
+      if (!user || (!priestStatus?.is_priest && !isAdmin)) return null;
       
       try {
         console.log("Fetching priest profile for user:", user.id);
@@ -123,7 +123,7 @@ const PriestDashboard = () => {
         return null;
       }
     },
-    enabled: !!user && !!priestStatus?.is_priest,
+    enabled: !!user && (!!priestStatus?.is_priest || !!isAdmin),
   });
   
   const { data: priestBookings, isLoading: isLoadingBookings } = useQuery({
@@ -170,46 +170,51 @@ const PriestDashboard = () => {
   }, [user, isLoading, navigate, toast]);
   
   useEffect(() => {
-    if (!isLoadingPriestStatus && priestStatus) {
-      if (priestStatus.priest_status === 'pending') {
-        toast({
-          title: "Approval Pending",
-          description: "Your priest account is pending approval by an administrator.",
-          variant: "default"
-        });
-        navigate('/profile');
-      } else if (priestStatus.priest_status === 'rejected') {
-        toast({
-          title: "Access Denied",
-          description: "Your priest application was not approved.",
-          variant: "destructive"
-        });
-        navigate('/profile');
-      } else if (!priestStatus.is_priest) {
-        toast({
-          title: "Not a Priest",
-          description: "You don't have priest privileges on this account.",
-          variant: "destructive"
-        });
-        navigate('/profile');
+    // Allow admins to access priest dashboard regardless of priest status
+    if (!isLoading && !isAdmin) {
+      if (!isLoadingPriestStatus && priestStatus) {
+        if (priestStatus.priest_status === 'pending') {
+          toast({
+            title: "Approval Pending",
+            description: "Your priest account is pending approval by an administrator.",
+            variant: "default"
+          });
+          navigate('/profile');
+        } else if (priestStatus.priest_status === 'rejected') {
+          toast({
+            title: "Access Denied",
+            description: "Your priest application was not approved.",
+            variant: "destructive"
+          });
+          navigate('/profile');
+        } else if (!priestStatus.is_priest) {
+          toast({
+            title: "Not a Priest",
+            description: "You don't have priest privileges on this account.",
+            variant: "destructive"
+          });
+          navigate('/profile');
+        }
       }
     }
-  }, [priestStatus, isLoadingPriestStatus, navigate, toast]);
+  }, [priestStatus, isLoadingPriestStatus, navigate, toast, isAdmin, isLoading]);
   
   useEffect(() => {
-    if (user && priestStatus?.is_priest && priestStatus?.priest_status === 'approved') {
+    if (user && (isAdmin || (priestStatus?.is_priest && priestStatus?.priest_status === 'approved'))) {
       toast({
-        title: "Welcome to Priest Dashboard",
+        title: isAdmin ? "Admin Access: Priest Dashboard" : "Welcome to Priest Dashboard",
         description: "Manage your rituals, teachings, and schedule.",
       });
       
-      const firstVisit = localStorage.getItem('priest_dashboard_visited') === null;
-      if (firstVisit) {
-        setShowAccessInstructions(true);
-        localStorage.setItem('priest_dashboard_visited', 'true');
+      if (!isAdmin) {
+        const firstVisit = localStorage.getItem('priest_dashboard_visited') === null;
+        if (firstVisit) {
+          setShowAccessInstructions(true);
+          localStorage.setItem('priest_dashboard_visited', 'true');
+        }
       }
     }
-  }, [user, priestStatus, toast]);
+  }, [user, priestStatus, toast, isAdmin]);
   
   const refreshPriestData = () => {
     queryClient.invalidateQueries({ queryKey: ['priest-status'] });
@@ -231,7 +236,8 @@ const PriestDashboard = () => {
     );
   }
   
-  if (!user || !priestStatus?.is_priest || priestStatus?.priest_status !== 'approved') {
+  // Allow admins to access, otherwise check if user is a priest with approved status
+  if (!user || (!isAdmin && (!priestStatus?.is_priest || priestStatus?.priest_status !== 'approved'))) {
     return (
       <>
         <Navbar />
@@ -294,7 +300,9 @@ const PriestDashboard = () => {
     <PriestLayout>
       <div className="space-y-8 animate-fade-in">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-spiritual-brown dark:text-spiritual-cream">Priest Dashboard</h1>
+          <h1 className="text-2xl font-bold text-spiritual-brown dark:text-spiritual-cream">
+            {isAdmin ? "Admin View: Priest Dashboard" : "Priest Dashboard"}
+          </h1>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"

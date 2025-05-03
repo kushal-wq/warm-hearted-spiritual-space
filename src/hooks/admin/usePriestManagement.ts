@@ -34,7 +34,7 @@ export const usePriestManagement = (
         is_priest_value: status === 'approved'
       };
       
-      // Fix the typing for the RPC call - using correct generic parameter order
+      // Fix the typing for the RPC call by not using generic type parameters
       const { data, error: directUpdateError } = await supabase.rpc(
         'update_priest_status',
         params
