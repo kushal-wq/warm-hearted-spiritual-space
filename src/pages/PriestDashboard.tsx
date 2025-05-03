@@ -67,7 +67,8 @@ const PriestDashboard = () => {
   const { data: priestProfile, isLoading: isLoadingPriestProfile } = useQuery({
     queryKey: ['priest-profile', user?.id],
     queryFn: async () => {
-      if (!user || (!priestStatus?.is_priest && !isAdmin)) return null;
+      // Allow access for admin users OR approved priests
+      if (!user || (!isAdmin && !priestStatus?.is_priest)) return null;
       
       try {
         console.log("Fetching priest profile for user:", user.id);
@@ -75,45 +76,49 @@ const PriestDashboard = () => {
           .from('priest_profiles')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle(); // Changed from single() to maybeSingle() to prevent errors
         
         if (error) {
-          if (error.code === 'PGRST116') {
-            console.log("No priest profile found, creating one...");
-            
-            const { data: userProfile } = await supabase
-              .from('profiles')
-              .select('first_name, last_name')
-              .eq('id', user.id)
-              .single();
-              
-            const name = userProfile ? 
-              `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() : 
-              'New Priest';
-              
-            const { data: newProfile, error: createError } = await supabase
-              .from('priest_profiles')
-              .insert({
-                user_id: user.id,
-                name: name || 'New Priest',
-                description: 'Experienced priest specializing in traditional ceremonies.',
-                specialties: ['Traditional Rituals', 'Meditation'],
-                experience_years: 1,
-                location: 'Delhi'
-              })
-              .select()
-              .single();
-              
-            if (createError) {
-              console.error("Error creating priest profile:", createError);
-              return null;
-            }
-            
-            return newProfile;
-          }
-          
           console.error("Error fetching priest profile:", error);
           return null;
+        }
+        
+        // If no profile exists but user is admin or approved priest, create one
+        if (!data && (isAdmin || priestStatus?.is_priest)) {
+          console.log("No priest profile found, creating one...");
+          
+          const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('first_name, last_name')
+            .eq('id', user.id)
+            .single();
+            
+          const name = userProfile ? 
+            `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() : 
+            'New Priest';
+            
+          const { data: newProfile, error: createError } = await supabase
+            .from('priest_profiles')
+            .insert({
+              user_id: user.id,
+              name: name || 'New Priest',
+              description: 'Experienced priest specializing in traditional ceremonies.',
+              specialties: ['Traditional Rituals', 'Meditation'],
+              experience_years: 1,
+              base_price: 100,
+              avatar_url: '/placeholder.svg',
+              availability: 'Weekends and evenings',
+              location: 'Delhi'
+            })
+            .select()
+            .single();
+            
+          if (createError) {
+            console.error("Error creating priest profile:", createError);
+            return null;
+          }
+          
+          return newProfile;
         }
         
         console.log("Priest profile result:", data);
@@ -365,6 +370,7 @@ const PriestDashboard = () => {
                 <li>Submit a priest application from your profile page</li>
                 <li>Wait for an admin to approve your application</li>
                 <li>Once approved, visit /priest or click "Priest Dashboard" from your profile</li>
+                <li>Admins can access this dashboard directly without needing priest status</li>
               </ol>
             </div>
             

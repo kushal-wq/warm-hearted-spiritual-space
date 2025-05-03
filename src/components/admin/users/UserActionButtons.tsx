@@ -36,36 +36,20 @@ const UserActionButtons: React.FC<UserActionButtonsProps> = ({
       </Button>
       
       {profile.priest_status === 'pending' && (
-        <>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setDialogState({
-                type: 'approve',
-                userId: profile.id
-              });
-            }}
-            className="text-green-600 hover:bg-green-50 hover:text-green-700"
-            disabled={isProcessing}
-          >
-            <Check className="h-4 w-4 mr-1" /> Approve
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setDialogState({
-                type: 'reject',
-                userId: profile.id
-              });
-            }}
-            className="text-red-500 hover:bg-red-50 hover:text-red-600"
-            disabled={isProcessing}
-          >
-            <X className="h-4 w-4 mr-1" /> Reject
-          </Button>
-        </>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setDialogState({
+              type: 'priest',
+              userId: profile.id
+            });
+          }}
+          className="text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+          disabled={isProcessing}
+        >
+          Review Application
+        </Button>
       )}
 
       {profile.is_priest && (

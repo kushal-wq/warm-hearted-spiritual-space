@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Dialog,
@@ -37,7 +38,7 @@ const UserDialogs = ({
           <DialogTitle>
             {dialogState.type === 'admin' 
               ? (user?.is_admin ? 'Revoke Admin Status' : 'Grant Admin Status') 
-              : dialogState.type === 'priest' 
+              : dialogState.type === 'priest' || dialogState.type === 'approve' || dialogState.type === 'reject'
                 ? 'Priest Application' 
                 : 'Revoke Priest Status'}
           </DialogTitle>
@@ -46,7 +47,7 @@ const UserDialogs = ({
               ? (user?.is_admin 
                   ? `Revoke admin privileges from ${user?.first_name} ${user?.last_name}`
                   : `Grant admin privileges to ${user?.first_name} ${user?.last_name}`)
-              : dialogState.type === 'priest'
+              : dialogState.type === 'priest' || dialogState.type === 'approve' || dialogState.type === 'reject'
                 ? `Review priest application for ${user?.first_name} ${user?.last_name}`
                 : `Revoke priest status from ${user?.first_name} ${user?.last_name}`}
           </DialogDescription>
@@ -90,7 +91,7 @@ const UserDialogs = ({
         )}
         
         {/* Priest Application Dialog */}
-        {dialogState.type === 'priest' && (
+        {(dialogState.type === 'priest' || dialogState.type === 'approve' || dialogState.type === 'reject') && (
           <>
             <div className="space-y-4">
               <p>

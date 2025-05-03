@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,21 +19,14 @@ export const usePriestManagement = (
       setIsProcessing(true);
       console.log(`Approving priest with ID ${userId}, setting status to: ${status}`);
       
-      // Define the proper type for the RPC parameters
-      type UpdatePriestStatusParams = {
-        user_id: string;
-        new_status: 'approved' | 'rejected';
-        is_priest_value: boolean;
-      };
-      
-      // Create properly typed parameters
-      const params: UpdatePriestStatusParams = {
+      // Define the proper parameters
+      const params = {
         user_id: userId,
         new_status: status,
         is_priest_value: status === 'approved'
       };
       
-      // Fix the typing for the RPC call by not using generic type parameters
+      // Fix by removing explicit type parameters and letting TypeScript infer them
       const { data, error: directUpdateError } = await supabase.rpc(
         'update_priest_status',
         params
