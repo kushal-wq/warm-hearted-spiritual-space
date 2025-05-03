@@ -1,19 +1,24 @@
 
 import React from 'react';
-import ScheduleCard from './cards/ScheduleCard';
-import RitualsCard from './cards/RitualsCard';
-import TeachingsCard from './cards/TeachingsCard';
-import ProfileCard from './cards/ProfileCard';
 import { getTodaysBookings } from './utils/bookingUtils';
 import { PriestBooking } from '@/types/priest';
+
+// Importing the separated card components
+import ScheduleCard from './cards/schedule/ScheduleCard';
+import RitualsCard from './cards/rituals/RitualsCard';
+import TeachingsCard from './cards/teachings/TeachingsCard';
+import ProfileCard from './cards/profile/ProfileCard';
 
 interface PriestDashboardCardsProps {
   setActiveTab: (tab: 'schedule' | 'rituals' | 'teachings' | 'profile') => void;
   bookings: PriestBooking[];
 }
 
+/**
+ * Dashboard cards grid component that displays key information for priests
+ */
 const PriestDashboardCards = ({ setActiveTab, bookings }: PriestDashboardCardsProps) => {
-  // Get today's bookings using our utility
+  // Get today's bookings using our utility function
   const todaysBookings = getTodaysBookings(bookings);
   
   return (
