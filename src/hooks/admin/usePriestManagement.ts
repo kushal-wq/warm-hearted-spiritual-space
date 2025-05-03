@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,7 +34,7 @@ export const usePriestManagement = (
       };
       
       // Use the properly typed parameters for the RPC call
-      const { data, error: directUpdateError } = await supabase.rpc<any>(
+      const { data, error: directUpdateError } = await supabase.rpc<any, UpdatePriestStatusParams>(
         'update_priest_status',
         params
       );
