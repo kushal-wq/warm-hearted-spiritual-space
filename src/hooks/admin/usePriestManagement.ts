@@ -20,17 +20,23 @@ export const usePriestManagement = (
       setIsProcessing(true);
       console.log(`Approving priest with ID ${userId}, setting status to: ${status}`);
       
-      // Create properly typed parameters
-      const params = {
+      // Create properly typed parameters - Fix the type error by using an interface
+      interface UpdatePriestStatusParams {
+        user_id: string;
+        new_status: string;
+        is_priest_value: boolean;
+      }
+      
+      const params: UpdatePriestStatusParams = {
         user_id: userId,
         new_status: status,
         is_priest_value: status === 'approved'
       };
       
-      // Use explicit type casting for the RPC call
+      // Use the interface for the RPC call to avoid TypeScript errors
       const { data, error: directUpdateError } = await supabase.rpc(
         'update_priest_status',
-        params as any  // Type cast to avoid TypeScript errors with RPC
+        params
       );
 
       if (directUpdateError) {
