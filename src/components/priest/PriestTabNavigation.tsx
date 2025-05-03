@@ -1,11 +1,7 @@
 
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Calendar, BookOpen, Settings } from 'lucide-react';
-import PriestProfile from './PriestProfile';
-import PriestSchedule from './PriestSchedule';
-import PriestTeachings from './PriestTeachings';
-import PriestRituals from './PriestRituals';
 
 type PriestTab = 'profile' | 'schedule' | 'teachings' | 'rituals';
 
@@ -30,26 +26,24 @@ const PriestTabNavigation: React.FC<PriestTabNavigationProps> = ({ activeTab, se
           <BookOpen className="h-4 w-4" />
           <span>Teachings</span>
         </TabsTrigger>
-          <TabsTrigger value="rituals" className="data-[state=active]:bg-spiritual-gold/20 data-[state=active]:text-spiritual-brown flex items-center space-x-2">
+        <TabsTrigger value="rituals" className="data-[state=active]:bg-spiritual-gold/20 data-[state=active]:text-spiritual-brown flex items-center space-x-2">
           <Settings className="h-4 w-4" />
           <span>Rituals</span>
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="profile">
-        <PriestProfile />
-      </TabsContent>
-      <TabsContent value="schedule">
-        <PriestSchedule />
-      </TabsContent>
-      <TabsContent value="teachings">
-        <PriestTeachings />
-      </TabsContent>
-      <TabsContent value="rituals">
-        <PriestRituals />
-      </TabsContent>
+      {activeTab === 'profile' && <div className="pt-4"><PriestProfile /></div>}
+      {activeTab === 'schedule' && <div className="pt-4"><PriestSchedule /></div>}
+      {activeTab === 'teachings' && <div className="pt-4"><PriestTeachings /></div>}
+      {activeTab === 'rituals' && <div className="pt-4"><PriestRituals /></div>}
     </Tabs>
   );
 };
+
+// Import at the top
+import PriestProfile from './PriestProfile';
+import PriestSchedule from './PriestSchedule';
+import PriestTeachings from './PriestTeachings';
+import PriestRituals from './PriestRituals';
 
 export default PriestTabNavigation;

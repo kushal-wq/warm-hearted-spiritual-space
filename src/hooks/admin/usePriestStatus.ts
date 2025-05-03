@@ -19,8 +19,12 @@ export const usePriestStatus = (
       setIsProcessing(true);
       console.log(`Approving priest with ID ${userId}, setting status to: ${status}`);
       
-      // Define the proper parameters
-      const params = {
+      // Define the proper parameters with correct types
+      const params: {
+        user_id: string;
+        new_status: 'approved' | 'rejected';
+        is_priest_value: boolean;
+      } = {
         user_id: userId,
         new_status: status,
         is_priest_value: status === 'approved'
