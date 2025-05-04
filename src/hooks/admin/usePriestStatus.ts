@@ -26,8 +26,8 @@ export const usePriestStatus = (
         is_priest_value: status === 'approved'
       };
       
-      // Fix: Use type assertion to the correct shape for the RPC function parameters
-      const { data, error: directUpdateError } = await supabase.rpc<any>(
+      // Fix: Properly provide both type arguments for the RPC function
+      const { data, error: directUpdateError } = await supabase.rpc<any, any>(
         'update_priest_status',
         params
       );
