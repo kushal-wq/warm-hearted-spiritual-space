@@ -17,6 +17,24 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper to clean up auth state - prevents auth limbo
+const cleanupAuthState = () => {
+  // Remove standard auth tokens
+  localStorage.removeItem('supabase.auth.token');
+  // Remove all Supabase auth keys from localStorage
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      localStorage.removeItem(key);
+    }
+  });
+  // Remove from sessionStorage if in use
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      sessionStorage.removeItem(key);
+    }
+  });
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -46,7 +64,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Check admin status if signed in
           if (session.user) {
             try {
-              await checkUserAdmin(session.user.id);
+              // Defer data fetching to prevent deadlocks
+              setTimeout(async () => {
+                await checkUserAdmin(session.user.id);
+              }, 0);
             } catch (error) {
               console.error("Error checking admin status:", error);
             }
@@ -109,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from('profiles')
         .select('is_admin')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error checking admin status:', error);
@@ -128,6 +149,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      // Clean up existing state first
+      cleanupAuthState();
+      
       console.log("Attempting sign in for:", email);
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
@@ -151,6 +175,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       setIsLoading(true);
+      // Clean up existing state first
+      cleanupAuthState();
+      
       console.log("Attempting Google sign in");
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -179,6 +206,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
       setIsLoading(true);
+      // Clean up existing state first
+      cleanupAuthState();
+      
       console.log("Attempting sign up for:", email);
       const { error } = await supabase.auth.signUp({
         email,
@@ -214,23 +244,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("Attempting sign out");
       setIsLoading(true);
       
-      // First clear state to prevent UI flashing
+      // First clean up any auth state
+      cleanupAuthState();
+      
+      // Then clear state to prevent UI flashing
       setUser(null);
       setSession(null);
       setIsAdmin(false);
       
-      // Then sign out from Supabase
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) throw error;
+      // Then sign out from Supabase, attempt global sign out
+      try {
+        const { error } = await supabase.auth.signOut({ scope: 'global' });
+        if (error) throw error;
+      } catch (signOutError) {
+        console.error("Error during signOut:", signOutError);
+        // Continue even if this fails
+      }
       
       toast({
         title: "Signed out",
         description: "You have been signed out successfully.",
       });
       
-      // Redirect to home page after sign out without forcing a page reload
-      // This allows React Router to handle the navigation
+      // Force page reload for a clean state
       window.location.href = '/';
       
     } catch (error: any) {

@@ -19,41 +19,28 @@ export const usePriestStatus = (
       setIsProcessing(true);
       console.log(`Approving priest with ID ${userId}, setting status to: ${status}`);
       
-      // Define the proper parameters with correct types
+      // Define the proper parameters
       const params = {
         user_id: userId,
         new_status: status,
         is_priest_value: status === 'approved'
       };
       
-      // Fix: Properly provide both type arguments for the RPC function
-      const { data, error: directUpdateError } = await supabase.rpc<any, any>(
-        'update_priest_status',
-        params
-      );
+      // Fix: Use a more direct approach for the RPC call to avoid type issues
+      const { data, error: directUpdateError } = await supabase.from('profiles')
+        .update({
+          priest_status: status,
+          is_priest: status === 'approved'
+        })
+        .eq('id', userId);
 
       if (directUpdateError) {
-        console.error("Error using RPC for priest status update:", directUpdateError);
-        
-        // Fallback to regular update if RPC fails
-        console.log("Falling back to regular update...");
-        const { error: profileUpdateError } = await supabase
-          .from('profiles')
-          .update({
-            priest_status: status,
-            is_priest: status === 'approved'
-          })
-          .eq('id', userId);
-  
-        if (profileUpdateError) {
-          console.error("Error updating priest status:", profileUpdateError);
-          throw profileUpdateError;
-        }
+        console.error("Error updating priest status:", directUpdateError);
+        throw directUpdateError;
       }
 
       console.log("Profile updated successfully with status:", status);
-      console.log("RPC update result:", data);
-
+      
       // If approving, create priest profile record
       if (status === 'approved') {
         await createPriestProfile(userId);
@@ -63,6 +50,9 @@ export const usePriestStatus = (
         title: "Success",
         description: `Priest application ${status === 'approved' ? 'approved' : 'rejected'} successfully`,
       });
+      
+      // Force data refresh
+      await refetchProfiles();
       
       setIsProcessing(false);
       return true;

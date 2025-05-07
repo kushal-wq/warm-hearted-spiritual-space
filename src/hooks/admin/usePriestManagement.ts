@@ -19,18 +19,21 @@ export const usePriestManagement = (
   // Function to invalidate queries after status changes
   const invalidatePriestQueries = async () => {
     console.log("Invalidating queries to refresh UI data");
-    queryClient.invalidateQueries({ queryKey: ['profiles'], exact: false });
-    queryClient.invalidateQueries({ queryKey: ['priest-status'], exact: false });
-    queryClient.invalidateQueries({ queryKey: ['priest-profile'], exact: false });
-    queryClient.invalidateQueries({ queryKey: ['priest-bookings'], exact: false });
+    
+    // Invalidate all relevant queries
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['profiles'] }),
+      queryClient.invalidateQueries({ queryKey: ['priest-status'] }),
+      queryClient.invalidateQueries({ queryKey: ['priest-profile'] }),
+      queryClient.invalidateQueries({ queryKey: ['priest-bookings'] })
+    ]);
     
     // Wait for database consistency
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    // Force immediate refetch
+    // Force immediate refetch of profiles
     console.log("Forcing profiles refetch");
-    const refreshResult = await profilesState.refetchProfiles();
-    console.log("Profiles refetch result:", refreshResult);
+    await profilesState.refetchProfiles();
   };
 
   // Wrap the handlePriestApproval to include query invalidation
