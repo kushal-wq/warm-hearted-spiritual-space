@@ -39,7 +39,7 @@ const UsersTab = () => {
     setTimeout(() => {
       refetchProfiles();
       console.log("Data refreshed after priest approval");
-    }, 500);
+    }, 1000);
   }, [refetchProfiles]);
 
   // Auto-refresh when dialog closes or processing finishes
@@ -143,7 +143,7 @@ const UsersTab = () => {
         handlePriestApproval={async (userId, status) => {
           const success = await handlePriestApproval(userId, status);
           if (success && status === 'approved') {
-            setTimeout(() => onPriestApproved(userId), 1000);
+            setTimeout(() => onPriestApproved(userId), 1500);
           }
           return success;
         }}

@@ -13,30 +13,23 @@ export const usePriestStatus = (
   const { refetchProfiles } = profilesState;
   const { createPriestProfile } = usePriestProfile();
 
-  // Function for priest approval
+  // Function for priest approval with simplified robust implementation
   const handlePriestApproval = async (userId: string, status: 'approved' | 'rejected') => {
     try {
       setIsProcessing(true);
       console.log(`Approving priest with ID ${userId}, setting status to: ${status}`);
       
-      // Define the proper parameters
-      const params = {
-        user_id: userId,
-        new_status: status,
-        is_priest_value: status === 'approved'
-      };
-      
-      // Fix: Use a more direct approach for the RPC call to avoid type issues
-      const { data, error: directUpdateError } = await supabase.from('profiles')
+      // Simple direct update approach
+      const { error } = await supabase.from('profiles')
         .update({
           priest_status: status,
           is_priest: status === 'approved'
         })
         .eq('id', userId);
 
-      if (directUpdateError) {
-        console.error("Error updating priest status:", directUpdateError);
-        throw directUpdateError;
+      if (error) {
+        console.error("Error updating priest status:", error);
+        throw error;
       }
 
       console.log("Profile updated successfully with status:", status);

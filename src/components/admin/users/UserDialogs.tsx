@@ -106,12 +106,12 @@ const UserDialogs = ({
                   onClick={async () => {
                     if (userId) {
                       console.log("Rejecting priest with ID:", userId);
-                      // Force a brief delay to ensure UI focus
+                      // Delay to ensure UI focus
                       await new Promise(resolve => setTimeout(resolve, 100));
                       const success = await handlePriestApproval(userId, 'rejected');
                       console.log("Rejection result:", success);
                       if (success) {
-                        // Force a brief delay to allow the UI to update before closing the dialog
+                        // Delay to allow UI update before closing
                         await new Promise(resolve => setTimeout(resolve, 500));
                         closeDialog();
                       }
@@ -125,13 +125,13 @@ const UserDialogs = ({
                   onClick={async () => {
                     if (userId) {
                       console.log("Approving priest with ID:", userId);
-                      // Force a brief delay to ensure UI focus
+                      // Delay to ensure UI focus
                       await new Promise(resolve => setTimeout(resolve, 100));
                       const success = await handlePriestApproval(userId, 'approved');
                       console.log("Approval result:", success);
                       if (success) {
-                        // Force a longer delay to allow database updates to complete
-                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        // Longer delay to allow database updates to complete
+                        await new Promise(resolve => setTimeout(resolve, 1500));
                         closeDialog();
                       }
                     }
