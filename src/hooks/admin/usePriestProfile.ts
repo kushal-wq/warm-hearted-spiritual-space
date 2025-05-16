@@ -1,50 +1,51 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 export const usePriestProfile = () => {
-  const { toast } = useToast();
-
-  // Helper function to create priest profile
   const createPriestProfile = async (userId: string) => {
-    console.log("Creating priest profile for approved user");
-    
     try {
-      // Get user's name for the priest profile
-      const { data: userProfile, error: profileError } = await supabase
+      console.log("Creating priest profile for user:", userId);
+      
+      // First, get user info from profiles table
+      const { data: userProfile, error: userError } = await supabase
         .from('profiles')
         .select('first_name, last_name')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
       
-      if (profileError) {
-        console.error("Error fetching user profile:", profileError);
-        throw profileError;
+      if (userError) {
+        console.error("Error fetching user profile:", userError);
+        throw userError;
       }
       
-      console.log("User profile fetched:", userProfile);
-      
-      // Check if priest profile already exists
-      const { data: existingProfile, error: existingError } = await supabase
+      // Check if priest profile already exists (to prevent duplicates)
+      const { data: existingProfile, error: checkError } = await supabase
         .from('priest_profiles')
         .select('id')
         .eq('user_id', userId)
         .maybeSingle();
-          
-      if (existingError) {
-        console.error("Error checking existing priest profile:", existingError);
-        throw existingError;
+      
+      if (checkError) {
+        console.error("Error checking for existing priest profile:", checkError);
       }
       
-      console.log("Existing profile check result:", existingProfile);
-          
-      if (!existingProfile) {
-        console.log("No existing profile found, creating new priest profile");
-        
-        // Create a new priest profile
-        const priestProfileData = {
+      // If profile exists, don't create a new one
+      if (existingProfile) {
+        console.log("Priest profile already exists for user:", userId);
+        return existingProfile;
+      }
+      
+      // Create a name from available profile data
+      const name = userProfile ? 
+        `${userProfile.first_name || ''} ${userProfile.last_name || ''}`.trim() || 'New Priest' : 
+        'New Priest';
+      
+      // Create new priest profile
+      const { data: priestProfile, error } = await supabase
+        .from('priest_profiles')
+        .insert({
           user_id: userId,
-          name: `${userProfile?.first_name || ''} ${userProfile?.last_name || ''}`.trim() || 'New Priest',
+          name: name,
           description: 'Experienced priest specializing in traditional ceremonies.',
           specialties: ['Traditional Rituals', 'Meditation'],
           experience_years: 1,
@@ -52,27 +53,19 @@ export const usePriestProfile = () => {
           avatar_url: '/placeholder.svg',
           availability: 'Weekends and evenings',
           location: 'Delhi'
-        };
-        
-        console.log("Creating priest profile with data:", priestProfileData);
-        
-        const { data: newProfile, error: insertError } = await supabase
-          .from('priest_profiles')
-          .insert(priestProfileData)
-          .select('*')
-          .single();
-        
-        if (insertError) {
-          console.error("Failed to create priest profile:", insertError);
-          throw insertError;
-        }
-        
-        console.log("New priest profile created successfully:", newProfile);
-      } else {
-        console.log("Priest profile already exists, skipping creation");
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        console.error("Error creating priest profile:", error);
+        throw error;
       }
+      
+      console.log("Successfully created priest profile:", priestProfile);
+      return priestProfile;
     } catch (error) {
-      console.error("Error in profile creation step:", error);
+      console.error("Exception in createPriestProfile:", error);
       throw error;
     }
   };

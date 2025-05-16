@@ -95,9 +95,14 @@ const UserDialogs = ({
           <>
             <div className="space-y-4">
               <p>
-                {user?.first_name} {user?.last_name} ({user?.email}) has applied to be a priest.
+                {user?.first_name} {user?.last_name} ({user?.email || 'No email available'}) has applied to be a priest.
               </p>
               <p>Would you like to approve or reject this application?</p>
+              {isProcessing && (
+                <div className="py-2 px-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md text-amber-700 dark:text-amber-300 text-sm">
+                  This operation may take a moment to complete. Please be patient...
+                </div>
+              )}
             </div>
             <DialogFooter className="flex justify-between">
               <div className="flex gap-2">
@@ -106,13 +111,9 @@ const UserDialogs = ({
                   onClick={async () => {
                     if (userId) {
                       console.log("Rejecting priest with ID:", userId);
-                      // Delay to ensure UI focus
-                      await new Promise(resolve => setTimeout(resolve, 100));
                       const success = await handlePriestApproval(userId, 'rejected');
                       console.log("Rejection result:", success);
                       if (success) {
-                        // Delay to allow UI update before closing
-                        await new Promise(resolve => setTimeout(resolve, 500));
                         closeDialog();
                       }
                     }
@@ -125,13 +126,9 @@ const UserDialogs = ({
                   onClick={async () => {
                     if (userId) {
                       console.log("Approving priest with ID:", userId);
-                      // Delay to ensure UI focus
-                      await new Promise(resolve => setTimeout(resolve, 100));
                       const success = await handlePriestApproval(userId, 'approved');
                       console.log("Approval result:", success);
                       if (success) {
-                        // Longer delay to allow database updates to complete
-                        await new Promise(resolve => setTimeout(resolve, 1500));
                         closeDialog();
                       }
                     }
@@ -141,7 +138,11 @@ const UserDialogs = ({
                   {isProcessing ? 'Processing...' : 'Approve'}
                 </Button>
               </div>
-              <Button variant="outline" onClick={closeDialog} disabled={isProcessing}>
+              <Button 
+                variant="outline" 
+                onClick={closeDialog} 
+                disabled={isProcessing}
+              >
                 Cancel
               </Button>
             </DialogFooter>
@@ -153,7 +154,7 @@ const UserDialogs = ({
           <>
             <div className="space-y-4">
               <p>
-                Are you sure you want to revoke the priest status from {user?.first_name} {user?.last_name} ({user?.email})?
+                Are you sure you want to revoke the priest status from {user?.first_name} {user?.last_name} ({user?.email || 'No email available'})?
               </p>
               <p>
                 This action will remove all priest privileges from this user.

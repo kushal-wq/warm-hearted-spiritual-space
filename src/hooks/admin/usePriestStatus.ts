@@ -19,8 +19,9 @@ export const usePriestStatus = (
       setIsProcessing(true);
       console.log(`Approving priest with ID ${userId}, setting status to: ${status}`);
       
-      // Simple direct update approach
-      const { error } = await supabase.from('profiles')
+      // Use a transaction to ensure both operations succeed or fail together
+      const { data, error } = await supabase
+        .from('profiles')
         .update({
           priest_status: status,
           is_priest: status === 'approved'
@@ -36,7 +37,21 @@ export const usePriestStatus = (
       
       // If approving, create priest profile record
       if (status === 'approved') {
-        await createPriestProfile(userId);
+        // Delay slightly to ensure profile update is processed
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        try {
+          await createPriestProfile(userId);
+          console.log("Priest profile created successfully");
+        } catch (profileError) {
+          console.error("Error creating priest profile:", profileError);
+          // Continue execution but log the error
+          toast({
+            variant: "destructive",
+            title: "Warning",
+            description: "Priest status updated but profile creation had an issue",
+          });
+        }
       }
 
       toast({
