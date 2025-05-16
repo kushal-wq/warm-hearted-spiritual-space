@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { DialogState, UserTabProps } from '../types';
+import { Loader2 } from 'lucide-react';
 
 const UserDialogs = ({ 
   dialogState, 
@@ -20,15 +21,52 @@ const UserDialogs = ({
   handlePriestApproval,
   revokePriestStatus
 }) => {
+  const [localProcessing, setLocalProcessing] = useState(false);
+  const [operationCompleted, setOperationCompleted] = useState(false);
   const userId = dialogState.userId;
   const user = profiles?.find(u => u.id === userId);
+  
+  // Reset state when dialog opens or closes
+  useEffect(() => {
+    if (dialogState.type) {
+      setOperationCompleted(false);
+    }
+  }, [dialogState.type]);
   
   const closeDialog = () => {
     console.log("Closing dialog");
     setDialogState({ type: null, userId: null });
+    setOperationCompleted(false);
   };
   
   if (!dialogState.type) return null;
+
+  // Custom approval handler with better state management
+  const handleApprovalAction = async (status: 'approved' | 'rejected') => {
+    if (userId) {
+      setLocalProcessing(true);
+      console.log(`Initiating ${status} action for user: ${userId}`);
+      
+      try {
+        const success = await handlePriestApproval(userId, status);
+        
+        if (success) {
+          console.log(`${status} operation completed successfully`);
+          setOperationCompleted(true);
+          // Show success state briefly before closing
+          setTimeout(() => {
+            closeDialog();
+          }, 1500);
+        } else {
+          console.log(`${status} operation failed`);
+        }
+      } catch (error) {
+        console.error(`Error during ${status} operation:`, error);
+      } finally {
+        setLocalProcessing(false);
+      }
+    }
+  };
 
   // Render different dialog content based on the dialog type
   return (
@@ -94,58 +132,69 @@ const UserDialogs = ({
         {(dialogState.type === 'priest' || dialogState.type === 'approve' || dialogState.type === 'reject') && (
           <>
             <div className="space-y-4">
-              <p>
-                {user?.first_name} {user?.last_name} ({user?.email || 'No email available'}) has applied to be a priest.
-              </p>
-              <p>Would you like to approve or reject this application?</p>
-              {isProcessing && (
-                <div className="py-2 px-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md text-amber-700 dark:text-amber-300 text-sm">
-                  This operation may take a moment to complete. Please be patient...
+              {operationCompleted ? (
+                <div className="py-4 text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                    <svg className="h-6 w-6 text-green-600 dark:text-green-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="mt-3 text-lg font-medium text-gray-900 dark:text-gray-100">Action Completed</h3>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    The priest status has been updated successfully
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p>
+                    {user?.first_name} {user?.last_name} ({user?.email || 'No email available'}) has applied to be a priest.
+                  </p>
+                  <p>Would you like to approve or reject this application?</p>
+                </>
+              )}
+              
+              {(isProcessing || localProcessing) && !operationCompleted && (
+                <div className="py-3 px-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md">
+                  <div className="flex items-center space-x-3">
+                    <Loader2 className="h-4 w-4 animate-spin text-amber-700 dark:text-amber-300" />
+                    <p className="text-amber-700 dark:text-amber-300 text-sm">
+                      Processing request... This may take a moment.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
-            <DialogFooter className="flex justify-between">
-              <div className="flex gap-2">
+            
+            {!operationCompleted && (
+              <DialogFooter className="flex justify-between">
+                <div className="flex gap-2">
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => handleApprovalAction('rejected')}
+                    disabled={isProcessing || localProcessing}
+                  >
+                    {(isProcessing || localProcessing) ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Rejecting...</>
+                    ) : 'Reject'}
+                  </Button>
+                  <Button 
+                    onClick={() => handleApprovalAction('approved')}
+                    disabled={isProcessing || localProcessing}
+                  >
+                    {(isProcessing || localProcessing) ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Approving...</>
+                    ) : 'Approve'}
+                  </Button>
+                </div>
                 <Button 
-                  variant="destructive" 
-                  onClick={async () => {
-                    if (userId) {
-                      console.log("Rejecting priest with ID:", userId);
-                      const success = await handlePriestApproval(userId, 'rejected');
-                      console.log("Rejection result:", success);
-                      if (success) {
-                        closeDialog();
-                      }
-                    }
-                  }}
-                  disabled={isProcessing}
+                  variant="outline" 
+                  onClick={closeDialog} 
+                  disabled={isProcessing || localProcessing}
                 >
-                  {isProcessing ? 'Processing...' : 'Reject'}
+                  Cancel
                 </Button>
-                <Button 
-                  onClick={async () => {
-                    if (userId) {
-                      console.log("Approving priest with ID:", userId);
-                      const success = await handlePriestApproval(userId, 'approved');
-                      console.log("Approval result:", success);
-                      if (success) {
-                        closeDialog();
-                      }
-                    }
-                  }}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? 'Processing...' : 'Approve'}
-                </Button>
-              </div>
-              <Button 
-                variant="outline" 
-                onClick={closeDialog} 
-                disabled={isProcessing}
-              >
-                Cancel
-              </Button>
-            </DialogFooter>
+              </DialogFooter>
+            )}
           </>
         )}
         

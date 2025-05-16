@@ -13,14 +13,14 @@ export const usePriestStatus = (
   const { refetchProfiles } = profilesState;
   const { createPriestProfile } = usePriestProfile();
 
-  // Function for priest approval with simplified robust implementation
+  // Function for priest approval with improved refresh mechanism
   const handlePriestApproval = async (userId: string, status: 'approved' | 'rejected') => {
     try {
       setIsProcessing(true);
       console.log(`Approving priest with ID ${userId}, setting status to: ${status}`);
       
-      // Use a transaction to ensure both operations succeed or fail together
-      const { data, error } = await supabase
+      // Update profile status directly in the database
+      const { error } = await supabase
         .from('profiles')
         .update({
           priest_status: status,
@@ -37,15 +37,12 @@ export const usePriestStatus = (
       
       // If approving, create priest profile record
       if (status === 'approved') {
-        // Delay slightly to ensure profile update is processed
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
         try {
+          console.log("Creating priest profile for user:", userId);
           await createPriestProfile(userId);
           console.log("Priest profile created successfully");
         } catch (profileError) {
           console.error("Error creating priest profile:", profileError);
-          // Continue execution but log the error
           toast({
             variant: "destructive",
             title: "Warning",
@@ -54,13 +51,28 @@ export const usePriestStatus = (
         }
       }
 
+      // Force immediate data refresh with retry mechanism
+      try {
+        console.log("Starting profile data refresh...");
+        await refetchProfiles();
+        console.log("Profile data refreshed successfully");
+      } catch (refreshError) {
+        console.error("First profile refresh attempt failed:", refreshError);
+        // Try once more after a short delay
+        setTimeout(async () => {
+          try {
+            await refetchProfiles();
+            console.log("Profile refresh retry succeeded");
+          } catch (error) {
+            console.error("Profile refresh retry also failed:", error);
+          }
+        }, 1000);
+      }
+      
       toast({
         title: "Success",
         description: `Priest application ${status === 'approved' ? 'approved' : 'rejected'} successfully`,
       });
-      
-      // Force data refresh
-      await refetchProfiles();
       
       setIsProcessing(false);
       return true;

@@ -1,5 +1,6 @@
 
 import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { ProcessingState, ProfilesState } from './types';
 import { usePriestStatus } from './usePriestStatus';
 import { usePriestRevocation } from './usePriestRevocation';
@@ -16,12 +17,13 @@ export const usePriestManagement = (
   // Priest revocation
   const { revokePriestStatus } = usePriestRevocation(processingState, profilesState);
 
-  // Function to invalidate queries after status changes
+  // Enhanced invalidation function with better logging and forced refetch
   const invalidatePriestQueries = async () => {
-    console.log("Invalidating queries to refresh UI data");
+    console.log("Starting complete data invalidation process...");
     
     try {
-      // Invalidate all relevant queries
+      // First invalidate all queries
+      console.log("Invalidating cached queries...");
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['profiles'] }),
         queryClient.invalidateQueries({ queryKey: ['priest-status'] }),
@@ -29,31 +31,59 @@ export const usePriestManagement = (
         queryClient.invalidateQueries({ queryKey: ['priest-bookings'] })
       ]);
       
-      // Wait for database consistency
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log("All queries invalidated successfully");
       
-      // Force immediate refetch of profiles
-      console.log("Forcing profiles refetch");
+      // Force immediate refetch
+      console.log("Forcing immediate profiles refetch");
       await profilesState.refetchProfiles();
       
-      console.log("Data refresh completed successfully");
+      // Add a second refetch after a short delay for extra reliability
+      setTimeout(async () => {
+        console.log("Performing follow-up profiles refetch");
+        await profilesState.refetchProfiles();
+        console.log("Follow-up refetch completed");
+      }, 1500);
+      
     } catch (error) {
       console.error("Error during data refresh:", error);
+      // Try one more time as a fallback
+      setTimeout(async () => {
+        try {
+          await profilesState.refetchProfiles();
+          console.log("Fallback refetch succeeded");
+        } catch (e) {
+          console.error("Even fallback refetch failed:", e);
+        }
+      }, 2000);
     }
   };
 
-  // Wrap the handlePriestApproval to include query invalidation
+  // Improved approval handler with better logging and refresh mechanism
   const handlePriestApprovalWithRefresh = async (userId: string, status: 'approved' | 'rejected') => {
-    console.log(`Starting priest approval process for user ${userId} with status ${status}`);
+    console.log(`Starting enhanced priest ${status} process for user ${userId}`);
     const success = await handlePriestApproval(userId, status);
     
     if (success) {
-      console.log("Approval successful, refreshing data...");
+      console.log(`${status} successful, starting comprehensive data refresh`);
       await invalidatePriestQueries();
       
-      // Double-check the status was updated
-      const updatedProfile = profilesState.profiles?.find(p => p.id === userId);
-      console.log("Updated profile after refresh:", updatedProfile);
+      // Add a delay and check if the profile actually updated
+      setTimeout(async () => {
+        const { data } = await supabase
+          .from('profiles')
+          .select('priest_status, is_priest')
+          .eq('id', userId)
+          .single();
+          
+        console.log("Profile state after update:", data);
+        
+        // If data doesn't match expected state, try refreshing again
+        if (data && ((status === 'approved' && !data.is_priest) || 
+                     (status === 'rejected' && data.priest_status !== 'rejected'))) {
+          console.log("Data inconsistency detected, refreshing again");
+          await profilesState.refetchProfiles();
+        }
+      }, 2000);
     } else {
       console.log("Approval failed, not refreshing data");
     }
@@ -61,16 +91,14 @@ export const usePriestManagement = (
     return success;
   };
 
-  // Wrap revokePriestStatus to include query invalidation
+  // Improved revocation handler
   const revokePriestStatusWithRefresh = async (userId: string) => {
-    console.log(`Starting priest revocation process for user ${userId}`);
+    console.log(`Starting enhanced priest revocation process for user ${userId}`);
     const success = await revokePriestStatus(userId);
     
     if (success) {
-      console.log("Revocation successful, refreshing data...");
+      console.log("Revocation successful, starting comprehensive data refresh");
       await invalidatePriestQueries();
-    } else {
-      console.log("Revocation failed, not refreshing data");
     }
     
     return success;
