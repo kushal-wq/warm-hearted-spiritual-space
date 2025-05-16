@@ -54,7 +54,7 @@ export const usePriestStatus = (
       }
 
       // Force immediate data refresh with aggressive invalidation strategy
-      await invalidateAndRefreshData();
+      await invalidateAndRefreshData(userId);
       
       toast({
         title: "Success",
@@ -76,7 +76,7 @@ export const usePriestStatus = (
   };
 
   // Enhanced data refresh with multiple strategies to ensure UI updates
-  const invalidateAndRefreshData = async () => {
+  const invalidateAndRefreshData = async (userId?: string) => {
     console.log("Starting aggressive data refresh strategy...");
     
     try {
@@ -111,20 +111,22 @@ export const usePriestStatus = (
       
       console.log("Initial data refresh completed");
       
-      // 4. Direct verification of data update
-      setTimeout(async () => {
-        try {
-          const { data } = await supabase
-            .from('profiles')
-            .select('id, first_name, last_name, priest_status, is_priest')
-            .eq('id', userId)
-            .single();
-          
-          console.log("Direct database verification result:", data);
-        } catch (e) {
-          console.error("Error in direct database verification:", e);
-        }
-      }, 2000);
+      // 4. Direct verification of data update (only if userId is provided)
+      if (userId) {
+        setTimeout(async () => {
+          try {
+            const { data } = await supabase
+              .from('profiles')
+              .select('id, first_name, last_name, priest_status, is_priest')
+              .eq('id', userId)
+              .single();
+            
+            console.log("Direct database verification result:", data);
+          } catch (e) {
+            console.error("Error in direct database verification:", e);
+          }
+        }, 2000);
+      }
       
     } catch (error) {
       console.error("Error during data refresh:", error);
