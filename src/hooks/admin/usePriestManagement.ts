@@ -37,12 +37,19 @@ export const usePriestManagement = (
       console.log("Forcing immediate profiles refetch");
       await profilesState.refetchProfiles();
       
-      // Add a second refetch after a short delay for extra reliability
-      setTimeout(async () => {
-        console.log("Performing follow-up profiles refetch");
-        await profilesState.refetchProfiles();
-        console.log("Follow-up refetch completed");
-      }, 1500);
+      // Add multiple refetches after short delays for extra reliability
+      const delays = [800, 2000, 4000];
+      for (const delay of delays) {
+        setTimeout(async () => {
+          console.log(`Performing follow-up profiles refetch after ${delay}ms`);
+          try {
+            await profilesState.refetchProfiles();
+            console.log(`Follow-up refetch after ${delay}ms completed`);
+          } catch (e) {
+            console.error(`Error during follow-up refetch after ${delay}ms:`, e);
+          }
+        }, delay);
+      }
       
     } catch (error) {
       console.error("Error during data refresh:", error);
@@ -71,7 +78,7 @@ export const usePriestManagement = (
       setTimeout(async () => {
         const { data } = await supabase
           .from('profiles')
-          .select('priest_status, is_priest')
+          .select('priest_status, is_priest, first_name, last_name')
           .eq('id', userId)
           .single();
           

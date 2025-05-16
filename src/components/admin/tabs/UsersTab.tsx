@@ -37,6 +37,7 @@ const UsersTab = () => {
     setActiveTab('priests');
     // Force a data refresh
     setTimeout(() => {
+      console.log("Forcing refresh after priest approval");
       refetchProfiles();
       console.log("Data refreshed after priest approval");
     }, 1000);
@@ -45,16 +46,30 @@ const UsersTab = () => {
   // Auto-refresh when dialog closes or processing finishes
   useEffect(() => {
     if (dialogState.type === null && !isProcessing) {
+      console.log("Dialog closed or processing finished, refreshing data");
       refetchProfiles();
     }
   }, [dialogState.type, isProcessing, refetchProfiles]);
 
+  // Auto-refresh on tab change to ensure data freshness
+  useEffect(() => {
+    console.log("Tab changed to:", activeTab);
+    refetchProfiles();
+  }, [activeTab, refetchProfiles]);
+
   // Auto-switch to priests tab when a priest is approved and there are no more pending requests
   useEffect(() => {
     if (pendingCount === 0 && activeTab === 'pending' && priestsCount > 0) {
+      console.log("No more pending requests, switching to priests tab");
       setActiveTab('priests');
     }
   }, [pendingCount, priestsCount, activeTab]);
+
+  // Force refresh on component mount
+  useEffect(() => {
+    console.log("UsersTab mounted, forcing initial data refresh");
+    refetchProfiles();
+  }, [refetchProfiles]);
 
   return (
     <Card className="shadow-sm hover:shadow-md transition-all duration-300">
@@ -80,7 +95,10 @@ const UsersTab = () => {
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={handleRefresh}
+              onClick={() => {
+                console.log("Manual refresh triggered");
+                handleRefresh();
+              }}
               disabled={isProcessing || profilesLoading}
               className="text-spiritual-brown dark:text-spiritual-cream"
             >
@@ -141,6 +159,7 @@ const UsersTab = () => {
         isProcessing={isProcessing}
         toggleAdminStatus={toggleAdminStatus}
         handlePriestApproval={async (userId, status) => {
+          console.log(`Handling priest approval for ${userId} with status ${status}`);
           const success = await handlePriestApproval(userId, status);
           if (success && status === 'approved') {
             setTimeout(() => onPriestApproved(userId), 1500);

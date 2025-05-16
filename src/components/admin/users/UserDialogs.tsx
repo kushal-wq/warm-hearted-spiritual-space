@@ -10,7 +10,9 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { DialogState, UserTabProps } from '../types';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 const UserDialogs = ({ 
   dialogState, 
@@ -56,7 +58,7 @@ const UserDialogs = ({
           // Show success state briefly before closing
           setTimeout(() => {
             closeDialog();
-          }, 1500);
+          }, 1800);
         } else {
           console.log(`${status} operation failed`);
         }
@@ -67,6 +69,21 @@ const UserDialogs = ({
       }
     }
   };
+
+  // Extract priest application details from profile
+  const getPriestApplicationDetails = () => {
+    if (!user) return null;
+    
+    // In a real application, you would fetch these details from the database
+    // For now, we'll return placeholder content
+    return {
+      experience: "5 years performing traditional rituals",
+      qualifications: "Vedic education at Kashi Vidyapith",
+      specialties: "Marriage ceremonies, naming ceremonies, house warmings"
+    };
+  };
+
+  const applicationDetails = getPriestApplicationDetails();
 
   // Render different dialog content based on the dialog type
   return (
@@ -135,9 +152,7 @@ const UserDialogs = ({
               {operationCompleted ? (
                 <div className="py-4 text-center">
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                    <svg className="h-6 w-6 text-green-600 dark:text-green-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+                    <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-200" />
                   </div>
                   <h3 className="mt-3 text-lg font-medium text-gray-900 dark:text-gray-100">Action Completed</h3>
                   <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -146,10 +161,44 @@ const UserDialogs = ({
                 </div>
               ) : (
                 <>
-                  <p>
-                    {user?.first_name} {user?.last_name} ({user?.email || 'No email available'}) has applied to be a priest.
-                  </p>
-                  <p>Would you like to approve or reject this application?</p>
+                  <div>
+                    <p className="mb-2">
+                      {user?.first_name} {user?.last_name} ({user?.email || 'No email available'}) has applied to be a priest.
+                    </p>
+                    
+                    {/* Application Details Card */}
+                    <Card className="bg-amber-50/50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+                      <CardContent className="pt-4">
+                        <h4 className="font-medium mb-2 text-amber-800 dark:text-amber-300">Application Details:</h4>
+                        
+                        <div className="space-y-3">
+                          <div>
+                            <p className="text-sm font-medium text-amber-900/70 dark:text-amber-300/70">Experience:</p>
+                            <p className="text-sm">{applicationDetails?.experience || "Not specified"}</p>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm font-medium text-amber-900/70 dark:text-amber-300/70">Qualifications:</p>
+                            <p className="text-sm">{applicationDetails?.qualifications || "Not specified"}</p>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm font-medium text-amber-900/70 dark:text-amber-300/70">Ritual Specialties:</p>
+                            <p className="text-sm">{applicationDetails?.specialties || "Not specified"}</p>
+                          </div>
+                          
+                          <div>
+                            <p className="text-sm font-medium text-amber-900/70 dark:text-amber-300/70">Current Status:</p>
+                            <Badge variant={user?.priest_status === 'pending' ? "outline" : "secondary"} className="mt-1">
+                              {user?.priest_status || "Not applied"}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <p className="mt-3">Would you like to approve or reject this application?</p>
+                  </div>
                 </>
               )}
               
@@ -175,15 +224,20 @@ const UserDialogs = ({
                   >
                     {(isProcessing || localProcessing) ? (
                       <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Rejecting...</>
-                    ) : 'Reject'}
+                    ) : (
+                      <><XCircle className="h-4 w-4 mr-2" /> Reject</>
+                    )}
                   </Button>
                   <Button 
                     onClick={() => handleApprovalAction('approved')}
                     disabled={isProcessing || localProcessing}
+                    className="bg-green-600 hover:bg-green-700"
                   >
                     {(isProcessing || localProcessing) ? (
                       <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Approving...</>
-                    ) : 'Approve'}
+                    ) : (
+                      <><CheckCircle2 className="h-4 w-4 mr-2" /> Approve</>
+                    )}
                   </Button>
                 </div>
                 <Button 

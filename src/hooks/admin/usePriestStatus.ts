@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ProcessingState, ProfilesState } from './types';
 import { usePriestProfile } from './usePriestProfile';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const usePriestStatus = (
   processingState: ProcessingState,
@@ -12,6 +13,7 @@ export const usePriestStatus = (
   const { setIsProcessing } = processingState;
   const { refetchProfiles } = profilesState;
   const { createPriestProfile } = usePriestProfile();
+  const queryClient = useQueryClient();
 
   // Function for priest approval with improved refresh mechanism
   const handlePriestApproval = async (userId: string, status: 'approved' | 'rejected') => {
@@ -51,23 +53,8 @@ export const usePriestStatus = (
         }
       }
 
-      // Force immediate data refresh with retry mechanism
-      try {
-        console.log("Starting profile data refresh...");
-        await refetchProfiles();
-        console.log("Profile data refreshed successfully");
-      } catch (refreshError) {
-        console.error("First profile refresh attempt failed:", refreshError);
-        // Try once more after a short delay
-        setTimeout(async () => {
-          try {
-            await refetchProfiles();
-            console.log("Profile refresh retry succeeded");
-          } catch (error) {
-            console.error("Profile refresh retry also failed:", error);
-          }
-        }, 1000);
-      }
+      // Force immediate data refresh with aggressive invalidation strategy
+      await invalidateAndRefreshData();
       
       toast({
         title: "Success",
@@ -85,6 +72,64 @@ export const usePriestStatus = (
         description: error.message || "Failed to update priest status",
       });
       return false;
+    }
+  };
+
+  // Enhanced data refresh with multiple strategies to ensure UI updates
+  const invalidateAndRefreshData = async () => {
+    console.log("Starting aggressive data refresh strategy...");
+    
+    try {
+      // 1. First invalidate all related queries
+      console.log("Invalidating all related queries...");
+      await queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      
+      // 2. Immediate refetch
+      console.log("Performing immediate refetch...");
+      await refetchProfiles();
+      
+      // 3. Schedule multiple delayed refetches to ensure data consistency
+      const delayedRefetches = [500, 1500, 3000].map(delay => 
+        new Promise(resolve => {
+          setTimeout(async () => {
+            console.log(`Performing delayed refetch after ${delay}ms...`);
+            try {
+              await refetchProfiles();
+              console.log(`Delayed refetch after ${delay}ms completed successfully`);
+            } catch (e) {
+              console.error(`Error in delayed refetch after ${delay}ms:`, e);
+            }
+            resolve(true);
+          }, delay);
+        })
+      );
+      
+      // Let them run in parallel but don't wait for completion
+      Promise.all(delayedRefetches).catch(e => 
+        console.error("Error in delayed refetches:", e)
+      );
+      
+      console.log("Initial data refresh completed");
+      
+      // 4. Direct verification of data update
+      setTimeout(async () => {
+        try {
+          const { data } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name, priest_status, is_priest')
+            .eq('id', userId)
+            .single();
+          
+          console.log("Direct database verification result:", data);
+        } catch (e) {
+          console.error("Error in direct database verification:", e);
+        }
+      }, 2000);
+      
+    } catch (error) {
+      console.error("Error during data refresh:", error);
+      // Even if there's an error, try one more time
+      setTimeout(() => refetchProfiles(), 2500);
     }
   };
 
