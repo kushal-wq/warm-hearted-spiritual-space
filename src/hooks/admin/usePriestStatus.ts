@@ -83,6 +83,7 @@ export const usePriestStatus = (
       // 1. First invalidate all related queries
       console.log("Invalidating all related queries...");
       await queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      await queryClient.invalidateQueries({ queryKey: ['profile'] }); // Also invalidate individual profile queries
       
       // 2. Immediate refetch
       console.log("Performing immediate refetch...");

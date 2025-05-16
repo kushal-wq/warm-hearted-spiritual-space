@@ -25,7 +25,7 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2, UserCircle, LogOut, Shield } from 'lucide-react';
+import { Loader2, UserCircle, LogOut, Shield, RefreshCw } from 'lucide-react';
 import PriestApplicationSection from '@/components/profile/PriestApplicationSection';
 import { UserProfile } from '@/types/priest';
 
@@ -39,25 +39,62 @@ const Profile = () => {
   });
   const [isUpdating, setIsUpdating] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fetch profile data
-  const { data: profile, isLoading: isProfileLoading, refetch: refetchProfile } = useQuery({
+  // Enhanced fetch profile data with better error handling and retry mechanism
+  const { 
+    data: profile, 
+    isLoading: isProfileLoading, 
+    refetch: refetchProfile 
+  } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
       if (!user) return null;
       
+      console.log("Fetching profile data for user:", user.id);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching profile:", error);
+        throw error;
+      }
       
+      console.log("Profile data fetched:", data);
       return data as unknown as UserProfile;
     },
     enabled: !!user,
+    staleTime: 5000, // Consider data stale after 5 seconds
+    refetchOnWindowFocus: true, // Refresh data when window regains focus
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
+
+  // Implement a manual refresh function with visual feedback
+  const handleManualRefresh = async () => {
+    if (isRefreshing) return;
+    
+    setIsRefreshing(true);
+    try {
+      console.log("Manual profile refresh triggered");
+      await refetchProfile();
+      toast({
+        title: "Refreshed",
+        description: "Your profile information has been updated"
+      });
+    } catch (error) {
+      console.error("Error during manual refresh:", error);
+      toast({
+        variant: "destructive",
+        title: "Refresh failed",
+        description: "Could not update profile information"
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -74,12 +111,35 @@ const Profile = () => {
   // Set form data when profile loads
   useEffect(() => {
     if (profile) {
+      console.log("Setting form data from profile:", profile);
       setFormData({
         firstName: profile.first_name || '',
         lastName: profile.last_name || '',
       });
     }
   }, [profile]);
+
+  // Auto refresh profile when active tab changes to ensure data freshness
+  useEffect(() => {
+    console.log("Active tab changed, refreshing profile data");
+    refetchProfile();
+  }, [activeTab, refetchProfile]);
+
+  // Initial load and periodic check for status updates
+  useEffect(() => {
+    // Initial load
+    refetchProfile();
+    
+    // Set up periodic checks for status updates
+    const checkInterval = setInterval(() => {
+      if (profile?.priest_status === 'pending') {
+        console.log("Checking for priest status updates...");
+        refetchProfile();
+      }
+    }, 15000); // Check every 15 seconds if status is pending
+    
+    return () => clearInterval(checkInterval);
+  }, [refetchProfile, profile?.priest_status]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -162,6 +222,20 @@ const Profile = () => {
             <div className="w-full md:w-1/3">
               <Card>
                 <CardHeader className="text-center">
+                  <div className="flex justify-end">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleManualRefresh}
+                      disabled={isRefreshing}
+                      className="rounded-full h-8 w-8 p-0"
+                      title="Refresh Profile"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                      <span className="sr-only">Refresh</span>
+                    </Button>
+                  </div>
+                  
                   <Avatar className="w-24 h-24 mx-auto">
                     <AvatarImage 
                       src={profile.avatar_url || undefined} 
@@ -187,7 +261,7 @@ const Profile = () => {
                       </div>
                     )}
                     
-                    {profile.is_priest && profile.priest_status === 'approved' && (
+                    {profile.is_priest && (
                       <div className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
                         Priest
                       </div>
@@ -200,6 +274,19 @@ const Profile = () => {
                     <span className="text-gray-500">Email</span>
                     <span>{user.email}</span>
                   </div>
+                  
+                  {profile.priest_status && (
+                    <div className="flex flex-col gap-1 text-sm">
+                      <span className="text-gray-500">Priest Status</span>
+                      <span className={`font-medium ${
+                        profile.priest_status === 'approved' ? 'text-green-600' : 
+                        profile.priest_status === 'pending' ? 'text-amber-600' : 
+                        'text-red-600'
+                      }`}>
+                        {profile.priest_status.charAt(0).toUpperCase() + profile.priest_status.slice(1)}
+                      </span>
+                    </div>
+                  )}
                 </CardContent>
                 
                 <CardFooter>
@@ -228,7 +315,7 @@ const Profile = () => {
               )}
               
               {/* Priest Dashboard Link */}
-              {profile.is_priest && profile.priest_status === 'approved' && (
+              {profile.is_priest && (
                 <div className="mt-4">
                   <Button
                     onClick={() => navigate('/priest')}
