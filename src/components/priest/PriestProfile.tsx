@@ -31,6 +31,7 @@ const PriestProfile = () => {
     base_price: 0,
     availability: '',
     location: '',
+    approval_status: 'pending'
   });
 
   const { data, isLoading, error } = useQuery({
@@ -64,6 +65,7 @@ const PriestProfile = () => {
         base_price: 0,
         availability: 'Weekdays 9am-5pm',
         location: 'Local Temple',
+        approval_status: 'pending'
       };
       
       return newPriestProfile;
