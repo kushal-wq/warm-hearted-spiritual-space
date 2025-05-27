@@ -151,6 +151,7 @@ export type Database = {
       }
       priest_profiles: {
         Row: {
+          approval_status: string
           availability: string
           avatar_url: string
           base_price: number
@@ -166,6 +167,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          approval_status?: string
           availability?: string
           avatar_url?: string
           base_price?: number
@@ -181,6 +183,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          approval_status?: string
           availability?: string
           avatar_url?: string
           base_price?: number

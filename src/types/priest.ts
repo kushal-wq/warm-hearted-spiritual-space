@@ -1,4 +1,3 @@
-
 export interface PriestProfile {
   id?: string;
   user_id: string;
@@ -13,6 +12,7 @@ export interface PriestProfile {
   rating?: number;
   created_at?: string;
   updated_at?: string;
+  approval_status: 'pending' | 'approved' | 'rejected';
 }
 
 export interface PriestBooking {

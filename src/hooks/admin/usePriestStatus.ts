@@ -53,6 +53,24 @@ export const usePriestStatus = (
         }
       }
 
+      // Update the priest profile approval status if it exists
+      try {
+        const { error: priestProfileError } = await supabase
+          .from('priest_profiles')
+          .update({
+            approval_status: status
+          })
+          .eq('user_id', userId);
+
+        if (priestProfileError && priestProfileError.code !== 'PGRST116') {
+          console.error("Error updating priest profile approval status:", priestProfileError);
+        } else {
+          console.log("Priest profile approval status updated successfully");
+        }
+      } catch (profileUpdateError) {
+        console.error("Error updating priest profile approval status:", profileUpdateError);
+      }
+
       // Force immediate data refresh with aggressive invalidation strategy
       await invalidateAndRefreshData(userId);
       
@@ -84,6 +102,7 @@ export const usePriestStatus = (
       console.log("Invalidating all related queries...");
       await queryClient.invalidateQueries({ queryKey: ['profiles'] });
       await queryClient.invalidateQueries({ queryKey: ['profile'] }); // Also invalidate individual profile queries
+      await queryClient.invalidateQueries({ queryKey: ['priestProfile'] }); // Invalidate priest profile queries
       
       // 2. Immediate refetch
       console.log("Performing immediate refetch...");
