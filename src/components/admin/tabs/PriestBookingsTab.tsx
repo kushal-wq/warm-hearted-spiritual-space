@@ -51,55 +51,64 @@ const PriestBookingsTab = () => {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
   // Fetch priest bookings with detailed information
-  const { data: bookings, isLoading, refetch } = useQuery({
-    queryKey: ['priest-bookings'],
+  const { data: bookings, isLoading, refetch, error } = useQuery({
+    queryKey: ['admin-priest-bookings'],
     queryFn: async () => {
       try {
-        console.log("Fetching priest bookings...");
-        const { data: bookingsData, error } = await supabase
+        console.log("Fetching priest bookings for admin...");
+        
+        const { data: bookingsData, error: bookingsError } = await supabase
           .from('priest_bookings')
           .select(`
             *,
-            profiles:user_id (first_name, last_name, email, avatar_url),
-            priest_profiles:priest_id (name, avatar_url)
-          `);
+            profiles:user_id (
+              first_name, 
+              last_name, 
+              email, 
+              avatar_url
+            ),
+            priest_profiles:priest_id (
+              name, 
+              avatar_url
+            )
+          `)
+          .order('booking_date', { ascending: false });
         
-        if (error) {
-          console.error("Error fetching priest bookings:", error);
-          throw error;
+        if (bookingsError) {
+          console.error("Supabase error fetching priest bookings:", bookingsError);
+          throw new Error(`Failed to fetch bookings: ${bookingsError.message}`);
         }
         
-        console.log("Priest bookings fetched:", bookingsData);
-        // Cast safely after ensuring no error
+        console.log("Priest bookings fetched successfully:", bookingsData?.length || 0, "bookings");
         return (bookingsData || []) as unknown as BookingWithRelations[];
-      } catch (error) {
-        console.error("Error fetching priest bookings:", error);
+        
+      } catch (error: any) {
+        console.error("Error in priest bookings query:", error);
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Failed to load priest bookings"
+          title: "Error Loading Bookings",
+          description: error.message || "Failed to load priest bookings"
         });
-        return [];
+        throw error;
       }
-    }
+    },
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
+
+  // Log any query errors
+  useEffect(() => {
+    if (error) {
+      console.error("Query error for priest bookings:", error);
+    }
+  }, [error]);
 
   // Filter bookings based on search term
   const filteredBookings = searchTerm 
     ? bookings?.filter(booking => {
-        // Safely access potentially undefined or error nested properties
-        let firstName = '';
-        let lastName = '';
-        let priestName = '';
-        
-        if (booking.profiles) {
-          firstName = booking.profiles.first_name || '';
-          lastName = booking.profiles.last_name || '';
-        }
-        
-        if (booking.priest_profiles) {
-          priestName = booking.priest_profiles.name || '';
-        }
+        const firstName = booking.profiles?.first_name || '';
+        const lastName = booking.profiles?.last_name || '';
+        const priestName = booking.priest_profiles?.name || '';
         
         return firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
           lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -127,23 +136,31 @@ const PriestBookingsTab = () => {
 
   // Function to safely get client name
   const getClientName = (booking: BookingWithRelations) => {
-    if (booking.profiles && booking.profiles.first_name && booking.profiles.last_name) {
-      return `${booking.profiles.first_name} ${booking.profiles.last_name}`;
+    if (booking.profiles?.first_name || booking.profiles?.last_name) {
+      return `${booking.profiles.first_name || ''} ${booking.profiles.last_name || ''}`.trim();
     }
     return 'Unknown User';
   };
 
   // Handle refresh
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    queryClient.invalidateQueries({ queryKey: ['priest-bookings'] });
-    refetch().finally(() => {
-      setIsRefreshing(false);
+    try {
+      await refetch();
       toast({
         title: "Refreshed",
         description: "Booking data has been updated"
       });
-    });
+    } catch (error) {
+      console.error("Error refreshing bookings:", error);
+      toast({
+        variant: "destructive",
+        title: "Refresh Failed",
+        description: "Failed to refresh booking data"
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Format date helper
@@ -191,12 +208,30 @@ const PriestBookingsTab = () => {
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        {isLoading || isRefreshing ? (
+        {isLoading ? (
           <div className="py-10 text-center">
             <div className="inline-block rangoli-spinner"></div>
             <p className="mt-2 text-spiritual-brown/70 dark:text-spiritual-cream/70">
-              {isRefreshing ? 'Refreshing bookings...' : 'Loading bookings...'}
+              Loading priest bookings...
             </p>
+          </div>
+        ) : error ? (
+          <div className="py-10 text-center">
+            <Calendar className="h-8 w-8 mx-auto mb-2 opacity-30 text-red-500" />
+            <p className="text-red-600 dark:text-red-400">
+              Failed to load priest bookings
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              {error instanceof Error ? error.message : 'Unknown error occurred'}
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh}
+              className="mt-4"
+            >
+              Try Again
+            </Button>
           </div>
         ) : (
           <div className="overflow-x-auto">
