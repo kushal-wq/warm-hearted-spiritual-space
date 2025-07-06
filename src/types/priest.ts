@@ -1,3 +1,4 @@
+
 export interface PriestProfile {
   id?: string;
   user_id: string;
@@ -24,10 +25,13 @@ export interface PriestBooking {
   address: string;
   notes?: string;
   price: number;
-  status: string; // Changed from union type to string to accommodate any status value
+  status: string;
+  estimated_arrival?: string;
+  priest_started_journey?: boolean;
+  priest_current_location?: any;
   created_at?: string;
   updated_at?: string;
-  profiles?: any; // Added to support the profiles join from Supabase
+  profiles?: any;
 }
 
 export interface UserProfile {

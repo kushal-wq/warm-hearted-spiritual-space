@@ -40,6 +40,9 @@ interface BookingWithRelations extends Omit<PriestBooking, 'profiles' | 'priest_
     name: string | null;
     avatar_url: string | null;
   } | null;
+  estimated_arrival?: string;
+  priest_started_journey?: boolean;
+  priest_current_location?: any;
 }
 
 const PriestBookingsTab = () => {
