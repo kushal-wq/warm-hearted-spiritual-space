@@ -1,63 +1,63 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import AIChatGuru from "@/components/AIChatGuru";
-import Index from "./pages/Index";
-import About from "./pages/About";
-import Services from "./pages/Services";
-import Events from "./pages/Events";
-import Teachings from "./pages/Teachings";
-import Donate from "./pages/Donate";
-import Contact from "./pages/Contact";
-import Auth from "./pages/Auth";
-import Admin from "./pages/Admin";
-import Profile from "./pages/Profile";
-import NotFound from "./pages/NotFound";
-import PriestDashboard from "./pages/PriestDashboard";
-import Priests from "./pages/Priests"; // Add the new Priests page
-import BookPriest from "./pages/BookPriest"; // Add the BookPriest page
+import { Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import { Toaster } from '@/components/ui/toaster';
+import Index from '@/pages/Index';
+import About from '@/pages/About';
+import Services from '@/pages/Services';
+import Events from '@/pages/Events';
+import Teachings from '@/pages/Teachings';
+import Contact from '@/pages/Contact';
+import Donate from '@/pages/Donate';
+import Auth from '@/pages/Auth';
+import Profile from '@/pages/Profile';
+import Admin from '@/pages/Admin';
+import NotFound from '@/pages/NotFound';
+import Priests from '@/pages/Priests';
+import BookPriest from '@/pages/BookPriest';
+import PriestDashboard from '@/pages/PriestDashboard';
+import TrackBooking from '@/pages/TrackBooking';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 3,
+    },
+  },
+});
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <div className="min-h-screen bg-background">
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
               <Route path="/services" element={<Services />} />
               <Route path="/events" element={<Events />} />
               <Route path="/teachings" element={<Teachings />} />
-              <Route path="/donate" element={<Donate />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/donate" element={<Donate />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/priest" element={<PriestDashboard />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/admin" element={<Admin />} />
               <Route path="/priests" element={<Priests />} />
               <Route path="/book-priest/:id" element={<BookPriest />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="/priest-dashboard" element={<PriestDashboard />} />
+              <Route path="/track-booking/:id" element={<TrackBooking />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-            {/* Add the AI Chat Guru to all pages except Index (as it's already there) */}
-            <Routes>
-              <Route path="/*" element={location.pathname !== "/" ? <AIChatGuru /> : null} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+          </div>
+          <Toaster />
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;

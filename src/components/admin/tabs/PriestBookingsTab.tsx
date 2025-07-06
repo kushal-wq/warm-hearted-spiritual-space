@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +26,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Navigation, Clock, Square } from 'lucide-react';
 
 // Define a type that accounts for potential Supabase query errors
 interface BookingWithRelations extends Omit<PriestBooking, 'profiles' | 'priest_profiles'> {
@@ -245,13 +245,14 @@ const PriestBookingsTab = () => {
                   <TableHead>Location</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Journey</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredBookings?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-spiritual-brown/70 dark:text-spiritual-cream/70">
+                    <TableCell colSpan={9} className="text-center py-8 text-spiritual-brown/70 dark:text-spiritual-cream/70">
                       <Calendar className="h-8 w-8 mx-auto mb-2 opacity-30" />
                       {searchTerm ? 'No bookings match your search' : 'No priest bookings found'}
                     </TableCell>
@@ -288,6 +289,24 @@ const PriestBookingsTab = () => {
                       </TableCell>
                       <TableCell>
                         {getStatusBadge(booking.status)}
+                      </TableCell>
+                      <TableCell>
+                        {booking.priest_started_journey ? (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            <Navigation className="h-3 w-3 mr-1" />
+                            En Route
+                          </Badge>
+                        ) : booking.status === 'confirmed' ? (
+                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Ready
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                            <Square className="h-3 w-3 mr-1" />
+                            Inactive
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -378,6 +397,31 @@ const PriestBookingsTab = () => {
                   <p className="mt-1">{selectedBooking.booking_date ? formatDate(selectedBooking.booking_date) : 'N/A'}</p>
                 </div>
               </div>
+              
+              {/* Journey Status */}
+              {selectedBooking.status === 'confirmed' && (
+                <div>
+                  <h3 className="text-sm font-medium">Journey Status</h3>
+                  <div className="mt-1 flex items-center space-x-2">
+                    {selectedBooking.priest_started_journey ? (
+                      <>
+                        <Navigation className="h-4 w-4 text-green-500" />
+                        <span className="text-green-600">Priest is en route</span>
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="h-4 w-4 text-amber-500" />
+                        <span className="text-amber-600">Preparing for journey</span>
+                      </>
+                    )}
+                  </div>
+                  {selectedBooking.estimated_arrival && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      ETA: {formatDate(selectedBooking.estimated_arrival)}
+                    </p>
+                  )}
+                </div>
+              )}
               
               <div>
                 <h3 className="text-sm font-medium">Address</h3>

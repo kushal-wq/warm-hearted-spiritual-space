@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -143,7 +142,7 @@ const BookPriest = () => {
       bookingDateTime.setHours(hours, minutes);
       
       // Try to insert the booking into the database
-      const { error } = await supabase
+      const { data: newBooking, error } = await supabase
         .from('priest_bookings')
         .insert({
           user_id: user.id,
@@ -154,16 +153,20 @@ const BookPriest = () => {
           notes: booking.additionalNotes || null,
           price: priest?.base_price || 0,
           status: 'pending'
-        });
+        })
+        .select()
+        .single();
         
       if (error) throw error;
       
       toast({
         title: "Booking Submitted",
-        description: "Your booking request has been sent to the priest for confirmation.",
+        description: "Your booking request has been sent to the priest for confirmation. You can track your booking once it's confirmed.",
+        duration: 6000,
       });
       
-      navigate('/profile');
+      // Navigate to profile with a query parameter to show bookings
+      navigate('/profile?tab=bookings');
     } catch (error: any) {
       console.error("Error booking priest:", error);
       toast({
@@ -267,7 +270,7 @@ const BookPriest = () => {
                 <CardHeader>
                   <CardTitle className="text-spiritual-brown">Book Services with {priest?.name}</CardTitle>
                   <CardDescription>
-                    Fill in the details below to request services from this priest.
+                    Fill in the details below to request services from this priest. Once confirmed, you'll be able to track your booking in real-time.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -384,7 +387,7 @@ const BookPriest = () => {
                     <div className="pt-4 border-t">
                       <div className="flex justify-between items-center mb-4">
                         <span className="text-spiritual-brown font-medium">Service Fee:</span>
-                        <span className="text-spiritual-brown font-bold text-lg">${priest?.base_price}</span>
+                        <span className="text-spiritual-brown font-bold text-lg">₹{priest?.base_price}</span>
                       </div>
                       
                       <Button 
@@ -395,7 +398,7 @@ const BookPriest = () => {
                       </Button>
                       
                       <p className="text-sm text-gray-500 mt-4 text-center">
-                        Payment will be collected after the priest confirms your booking.
+                        Payment will be collected after the priest confirms your booking. Once confirmed, you'll receive real-time tracking updates.
                       </p>
                     </div>
                   </form>
