@@ -12,7 +12,7 @@ import PriestTeachings from './PriestTeachings';
 export type PriestTab = 'overview' | 'profile' | 'schedule' | 'rituals' | 'teachings';
 
 const PriestDashboardContent = () => {
-  const { bookings, priestProfile } = usePriestDashboard();
+  const { priestBookings, priestProfile } = usePriestDashboard();
   const [activeTab, setActiveTab] = useState<PriestTab>('overview');
 
   const handleTabChange = (tab: string) => {
@@ -33,7 +33,7 @@ const PriestDashboardContent = () => {
         return (
           <PriestDashboardCards 
             setActiveTab={handleTabChange}
-            bookings={bookings || []}
+            bookings={priestBookings || []}
           />
         );
     }

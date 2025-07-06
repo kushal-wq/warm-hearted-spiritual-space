@@ -2,18 +2,26 @@
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Calendar, BookOpen, Settings } from 'lucide-react';
+import PriestProfile from './PriestProfile';
+import PriestSchedule from './PriestSchedule';
+import PriestTeachings from './PriestTeachings';
+import PriestRituals from './PriestRituals';
 
-type PriestTab = 'profile' | 'schedule' | 'teachings' | 'rituals';
+type PriestTab = 'overview' | 'profile' | 'schedule' | 'teachings' | 'rituals';
 
 interface PriestTabNavigationProps {
-  activeTab: PriestTab;
-  setActiveTab: React.Dispatch<React.SetStateAction<PriestTab>>;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
 }
 
-const PriestTabNavigation: React.FC<PriestTabNavigationProps> = ({ activeTab, setActiveTab }) => {
+const PriestTabNavigation: React.FC<PriestTabNavigationProps> = ({ activeTab, onTabChange }) => {
   return (
-    <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as PriestTab)} className="w-full">
+    <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
       <TabsList className="mb-4 flex justify-center space-x-4">
+        <TabsTrigger value="overview" className="data-[state=active]:bg-spiritual-gold/20 data-[state=active]:text-spiritual-brown flex items-center space-x-2">
+          <Calendar className="h-4 w-4" />
+          <span>Overview</span>
+        </TabsTrigger>
         <TabsTrigger value="profile" className="data-[state=active]:bg-spiritual-gold/20 data-[state=active]:text-spiritual-brown flex items-center space-x-2">
           <User className="h-4 w-4" />
           <span>Profile</span>
@@ -31,19 +39,8 @@ const PriestTabNavigation: React.FC<PriestTabNavigationProps> = ({ activeTab, se
           <span>Rituals</span>
         </TabsTrigger>
       </TabsList>
-
-      {activeTab === 'profile' && <div className="pt-4"><PriestProfile /></div>}
-      {activeTab === 'schedule' && <div className="pt-4"><PriestSchedule /></div>}
-      {activeTab === 'teachings' && <div className="pt-4"><PriestTeachings /></div>}
-      {activeTab === 'rituals' && <div className="pt-4"><PriestRituals /></div>}
     </Tabs>
   );
 };
-
-// Import at the top
-import PriestProfile from './PriestProfile';
-import PriestSchedule from './PriestSchedule';
-import PriestTeachings from './PriestTeachings';
-import PriestRituals from './PriestRituals';
 
 export default PriestTabNavigation;
