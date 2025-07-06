@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +18,7 @@ export const usePriestTracking = (bookingId?: string) => {
   ) => {
     try {
       // Use raw SQL to insert into priest_locations table since it's not in types yet
-      const { error } = await supabase.rpc('insert_priest_location' as any, {
+      const { error } = await (supabase as any).rpc('insert_priest_location', {
         p_priest_id: priestId,
         p_booking_id: bookingId,
         p_latitude: locationUpdate.latitude,
@@ -27,7 +26,7 @@ export const usePriestTracking = (bookingId?: string) => {
         p_heading: locationUpdate.heading || null,
         p_speed: locationUpdate.speed || null,
         p_accuracy: locationUpdate.accuracy || null
-      } as any);
+      });
 
       if (error) {
         console.error('Error updating priest location:', error);
