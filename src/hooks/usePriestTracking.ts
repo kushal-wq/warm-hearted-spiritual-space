@@ -66,15 +66,11 @@ export const usePriestTracking = (bookingId?: string) => {
       }
     } catch (error: any) {
       console.error('Error fetching tracking data:', error);
-      toast({
-        variant: "destructive",
-        title: "Failed to Load Tracking Data",
-        description: error.message
-      });
+      // Don't show toast for fetch errors to avoid spam
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   // Handle tracking data updates from subscriptions
   const handleTrackingDataUpdate = useCallback((updates: Partial<TrackingData>) => {
@@ -86,16 +82,13 @@ export const usePriestTracking = (bookingId?: string) => {
     setPriestLocation(location);
   }, []);
 
-  // Set up real-time subscriptions
-  usePriestTrackingSubscriptions({
-    bookingId,
-    onTrackingDataUpdate: handleTrackingDataUpdate,
-    onLocationUpdate: handleLocationUpdate
-  });
-
-  // Initial data fetch
-  if (bookingId && !trackingData && !loading) {
-    fetchTrackingData(bookingId);
+  // Set up real-time subscriptions only if bookingId exists
+  if (bookingId) {
+    usePriestTrackingSubscriptions({
+      bookingId,
+      onTrackingDataUpdate: handleTrackingDataUpdate,
+      onLocationUpdate: handleLocationUpdate
+    });
   }
 
   return {

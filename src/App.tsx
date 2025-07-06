@@ -20,11 +20,13 @@ import BookPriest from '@/pages/BookPriest';
 import PriestDashboard from '@/pages/PriestDashboard';
 import TrackBooking from '@/pages/TrackBooking';
 
+// Create a single QueryClient instance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 3,
+      retry: 1, // Reduce retries to avoid error loops
+      refetchOnWindowFocus: false,
     },
   },
 });
