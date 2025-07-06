@@ -19,7 +19,7 @@ export const usePriestTracking = (bookingId?: string) => {
   ) => {
     try {
       // Use raw SQL to insert into priest_locations table since it's not in types yet
-      const { error } = await supabase.rpc('insert_priest_location', {
+      const { error } = await supabase.rpc('insert_priest_location' as any, {
         p_priest_id: priestId,
         p_booking_id: bookingId,
         p_latitude: locationUpdate.latitude,
@@ -27,7 +27,7 @@ export const usePriestTracking = (bookingId?: string) => {
         p_heading: locationUpdate.heading || null,
         p_speed: locationUpdate.speed || null,
         p_accuracy: locationUpdate.accuracy || null
-      });
+      } as any);
 
       if (error) {
         console.error('Error updating priest location:', error);
